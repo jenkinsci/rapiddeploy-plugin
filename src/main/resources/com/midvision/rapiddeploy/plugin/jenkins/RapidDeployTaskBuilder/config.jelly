@@ -1,0 +1,36 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+  <!--
+    This jelly script is used for per-project configuration.
+
+    See global.jelly for a general discussion about jelly script.
+  -->
+
+  <!--
+    Creates a text field that shows the value of the "name" property.
+    When submitted, it will be passed to the corresponding constructor parameter.
+  -->
+  <f:entry title="RapidDeploy server url" field="serverUrl">
+    <f:textbox />
+  </f:entry>  
+  <f:entry title="RapidDeploy authentication token" field="authenticationToken">
+    <f:textbox />
+  </f:entry>
+  <f:entry title="RapidDeploy project" field="projectName">
+    <f:textbox />
+  </f:entry>
+  <f:entry title="Target server name" field="server">
+    <f:textbox />
+  </f:entry>
+  <f:entry title="Target environment name" field="environment">
+    <f:textbox />
+  </f:entry>
+  <f:entry title="Target instance name" field="instance">
+    <f:textbox />
+  </f:entry>
+  <f:entry title="Target application name" field="application">
+    <f:textbox />
+  </f:entry> 
+  <f:entry title="Deployment package name" field="packageName">
+    <f:textbox />
+  </f:entry>
+</j:jelly>
