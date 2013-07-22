@@ -42,4 +42,20 @@
     -->
     <maven-hpi-plugin.version>1.95</maven-hpi-plugin.version>
   </properties>
+  
+	<scm>
+		<connection>scm:git:ssh://github.com:MidVision/rapiddeploy-jenkins.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com:MidVision/rapiddeploy-jenkins.git</developerConnection>
+		<url>https://github.com/MidVision/rapiddeploy-jenkins</url>
+	</scm>  
+	
+	<url>https://github.com/MidVision/rapiddeploy-jenkins/wiki</url>
+	
+	<developers>
+	    <developer>
+	      <id>MidVision</id>
+	      <name>Karoly Sepsy</name>
+	      <email>karoly.sepsy@midvision.com</email>
+	    </developer>
+  </developers>
 </project>
