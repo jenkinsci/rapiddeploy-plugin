@@ -6,7 +6,6 @@
     <version>1.509.1</version><!-- which version of Jenkins is this plugin built against? -->
   </parent>
 
-  <groupId>com.midvision.rapiddeploy.plugin.jenkins</groupId>
   <artifactId>rapiddeploy-jenkins</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>hpi</packaging>
@@ -44,16 +43,16 @@
   </properties>
   
 	<scm>
-		<connection>scm:git:ssh://github.com:MidVision/rapiddeploy-jenkins.git</connection>
-		<developerConnection>scm:git:ssh://git@github.com:MidVision/rapiddeploy-jenkins.git</developerConnection>
-		<url>https://github.com/MidVision/rapiddeploy-jenkins</url>
+		<connection>scm:git:ssh://github.com:jenkinsci/rapiddeploy-plugin.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com:jenkinsci/rapiddeploy-plugin.git</developerConnection>
+		<url>https://github.com/jenkinsci/rapiddeploy-plugin</url>
 	</scm>  
 	
-	<url>https://github.com/MidVision/rapiddeploy-jenkins/wiki</url>
+	<url>https://wiki.jenkins-ci.org/display/JENKINS/RapidDeploy+plugin</url>
 	
 	<developers>
 	    <developer>
-	      <id>MidVision</id>
+	      <id>sepsyk</id>
 	      <name>Karoly Sepsy</name>
 	      <email>karoly.sepsy@midvision.com</email>
 	    </developer>
