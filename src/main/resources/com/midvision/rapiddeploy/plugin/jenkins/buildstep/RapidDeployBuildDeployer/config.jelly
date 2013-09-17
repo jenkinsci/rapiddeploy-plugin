@@ -11,26 +11,22 @@
   -->
   <f:entry title="RapidDeploy server url" field="serverUrl">
     <f:textbox />
-  </f:entry>  
+  </f:entry>
+    
   <f:entry title="RapidDeploy authentication token" field="authenticationToken">
     <f:textbox />
   </f:entry>
-  <f:entry title="RapidDeploy project" field="projectName">
-    <f:textbox />
+            
+  <f:entry id="project" title="Project" name="project" field="project">  
+  	<f:select/>
   </f:entry>
-  <f:entry title="Target server name" field="server">
-    <f:textbox />
+    
+  <f:entry title="Environment" name="Environment" field="environment">  
+  	<f:select/>
   </f:entry>
-  <f:entry title="Target environment name" field="environment">
-    <f:textbox />
-  </f:entry>
-  <f:entry title="Target instance name" field="instance">
-    <f:textbox />
-  </f:entry>
-  <f:entry title="Target application name" field="application">
-    <f:textbox />
-  </f:entry> 
+   
   <f:entry title="Deployment package name" field="packageName">
-    <f:textbox />
-  </f:entry>
+    <f:select />
+  </f:entry>  
+  
 </j:jelly>
