@@ -14,19 +14,26 @@
   </f:entry>
     
   <f:entry title="RapidDeploy authentication token" field="authenticationToken">
-    <f:textbox />
+    <f:password />
   </f:entry>
             
   <f:entry id="project" title="Project" name="project" field="project">  
   	<f:select/>
   </f:entry>
-    
-  <f:entry title="Environment" name="Environment" field="environment">  
-  	<f:select/>
-  </f:entry>
-   
-  <f:entry title="Deployment package name" field="packageName">
+  
+  <f:validateButton
+   title="${%Show recent packages}"
+   method="getPackages" with="serverUrl,authenticationToken,project"/>     
+  
+  <f:optionalBlock field="enableCustomPackageName" title="Use custom package name" inline="true">
+	  <f:entry title="Package name" name="packageName" field="packageName">  
+	  	<f:textbox />
+	  </f:entry>
+  </f:optionalBlock>
+  
+  <f:entry title="Archive extension" field="archiveExension">
     <f:select />
-  </f:entry>  
+  </f:entry>
+    
   
 </j:jelly>

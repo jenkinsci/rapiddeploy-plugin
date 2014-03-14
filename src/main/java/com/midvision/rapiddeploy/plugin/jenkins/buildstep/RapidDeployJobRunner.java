@@ -23,18 +23,18 @@ import org.kohsuke.stapler.QueryParameter;
 
 import com.midvision.rapiddeploy.plugin.jenkins.RapidDeployConnector;
 
-public class RapidDeployBuildDeployer extends Builder {
+public class RapidDeployJobRunner extends Builder {
 
 	private final String serverUrl;
 	private final String authenticationToken;
 	private final String project;	
 	private final String environment;
 	private final String packageName;
-	public static final Log logger = LogFactory.getLog(RapidDeployBuildDeployer.class);
+	public static final Log logger = LogFactory.getLog(RapidDeployJobRunner.class);
 	
 
 	@DataBoundConstructor
-	public RapidDeployBuildDeployer(String serverUrl, String authenticationToken,
+	public RapidDeployJobRunner(String serverUrl, String authenticationToken,
 			String project, String environment, String packageName) {
 		super();
 		this.serverUrl = serverUrl;
@@ -92,7 +92,7 @@ public class RapidDeployBuildDeployer extends Builder {
 	}
 
 	/**
-	 * Descriptor for {@link RapidDeployBuildDeployer}. Used as a singleton. The
+	 * Descriptor for {@link RapidDeployJobRunner}. Used as a singleton. The
 	 * class is marked as public so that it can be accessed from views.
 	 */		
 
@@ -107,7 +107,7 @@ public class RapidDeployBuildDeployer extends Builder {
 			BuildStepDescriptor<Builder> {
 		
 		public DescriptorImpl() {
-			super(RapidDeployBuildDeployer.class);
+			super(RapidDeployJobRunner.class);
 			load();
 		}
 
@@ -211,7 +211,7 @@ public class RapidDeployBuildDeployer extends Builder {
 					if(envObjects.length>3){
 						List<String> packageNames;
 						try {
-							items.add("SNAPSHOT");
+							items.add("LATEST");
 							packageNames = RapidDeployConnector.invokeRapidDeployListPackages(authenticationToken, serverUrl, project, envObjects[0], envObjects[1], envObjects[2]);
 							for(String packageName : packageNames){
 								if(!"null".equals(packageName)){
