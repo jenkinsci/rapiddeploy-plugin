@@ -27,6 +27,12 @@ public class RapidDeployConnector {
 		return output;
 	}
 	
+	public static String invokeRapidDeployBuildPackage(String authenticationToken, String serverUrl, String projectName, String packageName, String archiveExension) throws Exception{
+		String deploymentUrl = buildPackageBuildUrl(serverUrl, projectName, packageName, archiveExension);		
+		String output = callRDServerPutReq(deploymentUrl, authenticationToken);
+		return output;
+	}
+	
 	public static List<String> invokeRapidDeployListProjects(String authenticationToken, String serverUrl) throws Exception{
 		String projectListUrl = buildProjectListQueryUrl(serverUrl, authenticationToken);		
 		String output = callRDServerGetReq(projectListUrl, authenticationToken);
@@ -40,8 +46,14 @@ public class RapidDeployConnector {
 	}
 	
 	public static List<String> invokeRapidDeployListPackages(String authenticationToken, String serverUrl, String projectName, String server, String environment, String instance) throws Exception{
-		String environmentListUrl = buildPackageListQueryUrl(serverUrl, authenticationToken, projectName, server, environment, instance);		
-		String output = callRDServerGetReq(environmentListUrl, authenticationToken);
+		String packageListUrl = buildPackageListQueryUrl(serverUrl, authenticationToken, projectName, server, environment, instance);		
+		String output = callRDServerGetReq(packageListUrl, authenticationToken);
+		return extractTagValueFromXml(output, "span");
+	}
+	
+	public static List<String> invokeRapidDeployListPackages(String authenticationToken, String serverUrl, String projectName) throws Exception{
+		String packageListUrl = buildPackageListQueryUrl(serverUrl, authenticationToken, projectName);		
+		String output = callRDServerGetReq(packageListUrl, authenticationToken);
 		return extractTagValueFromXml(output, "span");
 	}
 	
@@ -58,11 +70,23 @@ public class RapidDeployConnector {
 		url.append(application);
 		url.append("?returnLogFile=true");
 		if (packageName != null && !"".equals(packageName)
-				&& !"snapshot".equals(packageName.toLowerCase())) {
+				&& !"latest".equals(packageName.toLowerCase())) {
 			url.append("&packageName=").append(packageName);
 		}
 		return url.toString();
-	}	
+	}
+	
+	private static String buildPackageBuildUrl(String serverUrl, String projectName, String packageName, String archiveExension) {
+		StringBuilder url = new StringBuilder("");
+		if (!serverUrl.startsWith("http://")) {
+			url.append("http://");
+		}
+		url.append(serverUrl).append("/ws/deployment/");
+		url.append(projectName).append("/package/create?packageName=");
+		url.append(packageName == null? "" : packageName).append("&archiveExension=").append(archiveExension);		
+		
+		return url.toString();
+	}
 	
 	
 	private static String buildProjectListQueryUrl(String serverUrl, String authenticationToken) {
@@ -91,6 +115,15 @@ public class RapidDeployConnector {
 			url.append("http://");
 		}
 		url.append(serverUrl).append("/ws/deployment/" + projectName + "/package/list/" + server + "/" + environment + "/" + instance);		
+		return url.toString();
+	}
+	
+	private static String buildPackageListQueryUrl(String serverUrl, String authenticationToken, String projectName) {
+		StringBuilder url = new StringBuilder("");
+		if (!serverUrl.startsWith("http://")) {
+			url.append("http://");
+		}
+		url.append(serverUrl).append("/ws/deployment/" + projectName + "/package/list");		
 		return url.toString();
 	}
 	
