@@ -51,16 +51,10 @@ public class RapidDeployPackageBuilder extends Notifier {
 	@Override
 	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,BuildListener listener) {			
 
-		listener.getLogger().println("Invoking RapidDeploy project deploy via path: " + serverUrl);
-		listener.getLogger().println(project);
-		listener.getLogger().println("enable custom package name: " + enableCustomPackageName);
-		listener.getLogger().println(packageName);
-		listener.getLogger().println(archiveExension);
+		listener.getLogger().println("Invoking RapidDeploy package builder via path: " + serverUrl);		
 		try {						
 			String output = RapidDeployConnector.invokeRapidDeployBuildPackage(getAuthenticationToken(), getServerUrl(), getProject(), getPackageName(), getArchiveExension());
-			listener.getLogger().println(output);
-				
-			listener.getLogger().println("Check the results of the deployments here: " + serverUrl + "/ws/feed/" + project + "/list/jobs");			
+			listener.getLogger().println("Package build successfully requested!");		
 			return true;			
 			
 		} catch (Exception e) {

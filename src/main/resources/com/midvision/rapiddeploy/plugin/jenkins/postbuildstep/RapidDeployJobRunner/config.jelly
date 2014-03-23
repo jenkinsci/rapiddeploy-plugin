@@ -29,4 +29,8 @@
     <f:select />
   </f:entry>  
   
+  <f:entry title="Asynchronous job" field="asynchronousJob">
+    <f:checkbox />
+  </f:entry> 
+  
 </j:jelly>

@@ -33,6 +33,18 @@ public class RapidDeployConnector {
 		return output;
 	}
 	
+	public static String pollRapidDeployJobDetails(String authenticationToken, String serverUrl, String jobId) throws Exception{
+		String deploymentUrl = buildJobStatusUrl(serverUrl, jobId);		
+		String output = callRDServerGetReq(deploymentUrl, authenticationToken);
+		return output;
+	}
+	
+	public static String pollRapidDeployJobLog(String authenticationToken, String serverUrl, String jobId) throws Exception{
+		String deploymentUrl = buildJobLogUrl(serverUrl, jobId);		
+		String output = callRDServerGetReq(deploymentUrl, authenticationToken);
+		return output;
+	}
+	
 	public static List<String> invokeRapidDeployListProjects(String authenticationToken, String serverUrl) throws Exception{
 		String projectListUrl = buildProjectListQueryUrl(serverUrl, authenticationToken);		
 		String output = callRDServerGetReq(projectListUrl, authenticationToken);
@@ -88,6 +100,23 @@ public class RapidDeployConnector {
 		return url.toString();
 	}
 	
+	private static String buildJobStatusUrl(String serverUrl, String jobId) {
+		StringBuilder url = new StringBuilder("");
+		if (!serverUrl.startsWith("http://")) {
+			url.append("http://");
+		}
+		url.append(serverUrl).append("/ws/deployment/display/job/" + jobId );					
+		return url.toString();
+	}
+	
+	private static String buildJobLogUrl(String serverUrl, String jobId) {
+		StringBuilder url = new StringBuilder("");
+		if (!serverUrl.startsWith("http://")) {
+			url.append("http://");
+		}
+		url.append(serverUrl).append("/ws/deployment/showlog/job/" + jobId );					
+		return url.toString();
+	}
 	
 	private static String buildProjectListQueryUrl(String serverUrl, String authenticationToken) {
 		StringBuilder url = new StringBuilder("");
@@ -138,7 +167,8 @@ public class RapidDeployConnector {
 		if(status >= 400 && status < 500){
 			throw new Exception(response.getStatusLine().toString() + "\nError calling RapidDeploy server on url:"  + url + "\nCause: " + getInputstreamContent(responseOutput));
 		}
-		return "Exection returned with status code: " + status;
+						
+		return getInputstreamContent(responseOutput);
 	}
 	
 	private static String callRDServerGetReq(String url, String authenticationToken) throws Exception {
@@ -188,4 +218,26 @@ public class RapidDeployConnector {
         return outputValues;
 	}
 	
+	
+	public static String extractJobStatus(String responseOutput) throws Exception{
+		String jobStatus = null;
+		List<String> responseData = extractTagValueFromXml(responseOutput, "span");
+		for(int i=0; i< responseData.size(); i++){
+			if(responseData.get(i).equals("Display Details Job Status") && responseData.size() >= (i+1)){
+				jobStatus = responseData.get(i+1);
+			}
+		}
+		return jobStatus;
+	}
+	
+	public static String extractJobId(String responseOutput) throws Exception{
+		String jobId = null;
+		List<String> responseData = extractTagValueFromXml(responseOutput, "span");
+		for(int i=0; i< responseData.size(); i++){
+			if(responseData.get(i).equals("Deployment Job ID") && responseData.size() >= (i+1)){
+				jobId = responseData.get(i+1);
+			}
+		}
+		return jobId;
+	}
 }
