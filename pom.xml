@@ -7,7 +7,7 @@
   </parent>
 
   <artifactId>rapiddeploy-jenkins</artifactId>
-  <version>3.1-SNAPSHOT</version>
+  <version>3.1</version>
   <packaging>hpi</packaging>
 
   <!-- get every artifact through repo.jenkins-ci.org, which proxies all the artifacts that we need -->
