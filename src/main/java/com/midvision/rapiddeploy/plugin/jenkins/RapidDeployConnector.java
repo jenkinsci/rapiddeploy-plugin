@@ -70,10 +70,7 @@ public class RapidDeployConnector {
 	}
 	
 	private static String buildDeploymentUrl(String serverUrl, String projectName, String server, String environment, String instance, String application, String packageName) {
-		StringBuilder url = new StringBuilder("");
-		if (!serverUrl.startsWith("http://")) {
-			url.append("http://");
-		}
+		StringBuilder url = new StringBuilder("");		
 		url.append(serverUrl).append("/ws/deployment/");
 		url.append(projectName).append("/runjob/deploy/");
 		url.append(server).append("/");
@@ -89,10 +86,7 @@ public class RapidDeployConnector {
 	}
 	
 	private static String buildPackageBuildUrl(String serverUrl, String projectName, String packageName, String archiveExension) {
-		StringBuilder url = new StringBuilder("");
-		if (!serverUrl.startsWith("http://")) {
-			url.append("http://");
-		}
+		StringBuilder url = new StringBuilder("");		
 		url.append(serverUrl).append("/ws/deployment/");
 		url.append(projectName).append("/package/create?packageName=");
 		url.append(packageName == null? "" : packageName).append("&archiveExension=").append(archiveExension);		
@@ -102,27 +96,18 @@ public class RapidDeployConnector {
 	
 	private static String buildJobStatusUrl(String serverUrl, String jobId) {
 		StringBuilder url = new StringBuilder("");
-		if (!serverUrl.startsWith("http://")) {
-			url.append("http://");
-		}
 		url.append(serverUrl).append("/ws/deployment/display/job/" + jobId );					
 		return url.toString();
 	}
 	
 	private static String buildJobLogUrl(String serverUrl, String jobId) {
 		StringBuilder url = new StringBuilder("");
-		if (!serverUrl.startsWith("http://")) {
-			url.append("http://");
-		}
 		url.append(serverUrl).append("/ws/deployment/showlog/job/" + jobId );					
 		return url.toString();
 	}
 	
 	private static String buildProjectListQueryUrl(String serverUrl, String authenticationToken) {
 		StringBuilder url = new StringBuilder("");
-		if (!serverUrl.startsWith("http://")) {
-			url.append("http://");
-		}
 		url.append(serverUrl).append("/ws/project/list");		
 		
 		return url.toString();
@@ -130,9 +115,6 @@ public class RapidDeployConnector {
 
 	private static String buildEnvironmentListQueryUrl(String serverUrl, String authenticationToken, String projectName) {
 		StringBuilder url = new StringBuilder("");
-		if (!serverUrl.startsWith("http://")) {
-			url.append("http://");
-		}
 		url.append(serverUrl).append("/ws/project/" + projectName + "/list");		
 		
 		return url.toString();
@@ -140,18 +122,12 @@ public class RapidDeployConnector {
 	
 	private static String buildPackageListQueryUrl(String serverUrl, String authenticationToken, String projectName, String server, String environment, String instance) {
 		StringBuilder url = new StringBuilder("");
-		if (!serverUrl.startsWith("http://")) {
-			url.append("http://");
-		}
 		url.append(serverUrl).append("/ws/deployment/" + projectName + "/package/list/" + server + "/" + environment + "/" + instance);		
 		return url.toString();
 	}
 	
 	private static String buildPackageListQueryUrl(String serverUrl, String authenticationToken, String projectName) {
 		StringBuilder url = new StringBuilder("");
-		if (!serverUrl.startsWith("http://")) {
-			url.append("http://");
-		}
 		url.append(serverUrl).append("/ws/deployment/" + projectName + "/package/list");		
 		return url.toString();
 	}
