@@ -10,13 +10,18 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.apache.http.HttpResponse;
+import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPut;
+import org.apache.http.conn.scheme.Scheme;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
+
+import com.midvision.rapiddeploy.util.ssl.SSLCertificateUtils;
+
 
 public class RapidDeployConnector {
 	
@@ -133,7 +138,7 @@ public class RapidDeployConnector {
 	}
 	
 	private static String callRDServerPutReq(String url, String authenticationToken) throws Exception {
-		DefaultHttpClient httpClient = new DefaultHttpClient();
+		HttpClient httpClient = getHttpClient(true);
 		HttpPut putRequest = new HttpPut(url);
 		putRequest.addHeader("Authorization", authenticationToken);
 		HttpResponse response = httpClient.execute(putRequest);
@@ -148,7 +153,7 @@ public class RapidDeployConnector {
 	}
 	
 	private static String callRDServerGetReq(String url, String authenticationToken) throws Exception {
-		DefaultHttpClient httpClient = new DefaultHttpClient();
+		HttpClient httpClient = getHttpClient(true);
 		HttpGet getRequest = new HttpGet(url);
 		getRequest.addHeader("Authorization", authenticationToken);
 		HttpResponse response = httpClient.execute(getRequest);
@@ -215,5 +220,20 @@ public class RapidDeployConnector {
 			}
 		}
 		return jobId;
+	}
+	
+	public static HttpClient getHttpClient(boolean allCertificateTrusting) throws Exception{
+    	HttpClient httpClient = null;
+    	if(allCertificateTrusting){
+    		httpClient = setClientSSLScheme(httpClient, new Scheme("https", 443, SSLCertificateUtils.getAllTrustingSSLSocketFactory()));
+    	} else{
+    		 httpClient = new DefaultHttpClient();
+    	}
+    	return httpClient;
+    }
+	
+	private static HttpClient setClientSSLScheme(HttpClient client, Scheme scheme){
+		client.getConnectionManager().getSchemeRegistry().register(scheme);
+		return client;
 	}
 }
