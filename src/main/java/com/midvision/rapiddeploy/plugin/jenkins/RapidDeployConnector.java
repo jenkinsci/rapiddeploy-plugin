@@ -223,12 +223,10 @@ public class RapidDeployConnector {
 	}
 	
 	public static HttpClient getHttpClient(boolean allCertificateTrusting) throws Exception{
-    	HttpClient httpClient = null;
+    	HttpClient httpClient = new DefaultHttpClient();
     	if(allCertificateTrusting){
     		httpClient = setClientSSLScheme(httpClient, new Scheme("https", 443, SSLCertificateUtils.getAllTrustingSSLSocketFactory()));
-    	} else{
-    		 httpClient = new DefaultHttpClient();
-    	}
+    	}    		     
     	return httpClient;
     }
 	
