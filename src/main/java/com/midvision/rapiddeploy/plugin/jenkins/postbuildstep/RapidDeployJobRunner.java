@@ -10,7 +10,7 @@ import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
+import hudson.util.ComboBoxModel ;
 
 import java.io.IOException;
 import java.util.List;
@@ -217,8 +217,8 @@ public class RapidDeployJobRunner extends Notifier {
 			return FormValidation.ok();
 		}
 
-		public ListBoxModel doFillProjectItems(@QueryParameter("serverUrl") final String serverUrl, @QueryParameter("authenticationToken") final String authenticationToken) {
-			ListBoxModel items = new ListBoxModel();
+		public ComboBoxModel  doFillProjectItems(@QueryParameter("serverUrl") final String serverUrl, @QueryParameter("authenticationToken") final String authenticationToken) {
+			ComboBoxModel  items = new ComboBoxModel ();
 			if(serverUrl != null && !"".equals(serverUrl) && authenticationToken != null && !"".equals(authenticationToken)){
 				List<String> projects;
 				try {
@@ -233,8 +233,8 @@ public class RapidDeployJobRunner extends Notifier {
 			return items;
 		}
 
-		public ListBoxModel doFillEnvironmentItems(@QueryParameter("serverUrl") final String serverUrl, @QueryParameter("authenticationToken") final String authenticationToken, @QueryParameter("project") final String project) {
-			ListBoxModel items = new ListBoxModel();
+		public ComboBoxModel  doFillEnvironmentItems(@QueryParameter("serverUrl") final String serverUrl, @QueryParameter("authenticationToken") final String authenticationToken, @QueryParameter("project") final String project) {
+			ComboBoxModel  items = new ComboBoxModel ();
 			if(serverUrl != null && !"".equals(serverUrl) && authenticationToken != null && !"".equals(authenticationToken) && project != null && !"".equals(project)){
 				List<String> environments;
 				try {
@@ -251,8 +251,8 @@ public class RapidDeployJobRunner extends Notifier {
 			return items;
 		}
 		
-		public ListBoxModel doFillPackageNameItems(@QueryParameter("serverUrl") final String serverUrl, @QueryParameter("authenticationToken") final String authenticationToken, @QueryParameter("project") final String project, @QueryParameter("environment") final String environment) {
-			ListBoxModel items = new ListBoxModel();
+		public ComboBoxModel  doFillPackageNameItems(@QueryParameter("serverUrl") final String serverUrl, @QueryParameter("authenticationToken") final String authenticationToken, @QueryParameter("project") final String project, @QueryParameter("environment") final String environment) {
+			ComboBoxModel  items = new ComboBoxModel ();
 			if(serverUrl != null && !"".equals(serverUrl) && authenticationToken != null && !"".equals(authenticationToken) && project != null && !"".equals(project) && environment != null && !"".equals(environment)){
 				if(environment.contains(".")){
 					String[] envObjects = environment.split("\\.");

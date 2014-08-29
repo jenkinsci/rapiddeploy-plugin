@@ -18,15 +18,15 @@
   </f:entry>
             
   <f:entry id="project" title="Project" name="project" field="project">  
-  	<f:select/>
+  	<f:combobox/>
   </f:entry>
     
   <f:entry title="Environment" name="Environment" field="environment">  
-  	<f:select/>
+  	<f:combobox/>
   </f:entry>
    
   <f:entry title="Deployment package name" field="packageName">
-    <f:select />
+    <f:combobox />
   </f:entry>  
 
   <f:entry title="Asynchronous job" field="asynchronousJob">

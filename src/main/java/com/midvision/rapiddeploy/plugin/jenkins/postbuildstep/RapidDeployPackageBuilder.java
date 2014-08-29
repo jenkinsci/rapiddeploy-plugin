@@ -11,7 +11,7 @@ import hudson.tasks.Builder;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
+import hudson.util.ComboBoxModel ;
 
 import java.io.IOException;
 import java.util.List;
@@ -195,8 +195,8 @@ public class RapidDeployPackageBuilder extends Notifier {
 			return FormValidation.ok();
 		}
 
-		public ListBoxModel doFillProjectItems(@QueryParameter("serverUrl") final String serverUrl, @QueryParameter("authenticationToken") final String authenticationToken) {
-			ListBoxModel items = new ListBoxModel();
+		public ComboBoxModel  doFillProjectItems(@QueryParameter("serverUrl") final String serverUrl, @QueryParameter("authenticationToken") final String authenticationToken) {
+			ComboBoxModel  items = new ComboBoxModel ();
 			if(serverUrl != null && !"".equals(serverUrl) && authenticationToken != null && !"".equals(authenticationToken)){
 				List<String> projects;
 				try {
@@ -212,8 +212,8 @@ public class RapidDeployPackageBuilder extends Notifier {
 		}
 						
 		
-		public ListBoxModel doFillArchiveExensionItems() {
-			ListBoxModel items = new ListBoxModel();
+		public ComboBoxModel  doFillArchiveExensionItems() {
+			ComboBoxModel  items = new ComboBoxModel ();
 			items.add("jar");
 			items.add("war");
 			items.add("ear");			
