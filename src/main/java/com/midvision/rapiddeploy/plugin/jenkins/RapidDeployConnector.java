@@ -80,7 +80,9 @@ public class RapidDeployConnector {
 		url.append(projectName).append("/runjob/deploy/");
 		url.append(server).append("/");
 		url.append(environment).append("/");
-		url.append(instance).append("/");
+		if (instance != null && !"".equals(instance)){
+			url.append(instance).append("/");
+		}
 		url.append(application);
 		url.append("?returnLogFile=true");
 		if (packageName != null && !"".equals(packageName)
@@ -94,7 +96,9 @@ public class RapidDeployConnector {
 		StringBuilder url = new StringBuilder("");		
 		url.append(serverUrl).append("/ws/deployment/");
 		url.append(projectName).append("/package/create?packageName=");
-		url.append(packageName == null? "" : packageName).append("&archiveExension=").append(archiveExension);		
+		url.append(packageName == null? "" : packageName).append("&archiveExtension=").append((archiveExension == null || "".equals(archiveExension)) ? "jar" : archiveExension);		
+		//support RD 3.3-3.4 mistyped url parameter
+		url.append("&archiveExension=").append((archiveExension == null || "".equals(archiveExension)) ? "jar" : archiveExension);		
 		
 		return url.toString();
 	}
@@ -205,6 +209,8 @@ public class RapidDeployConnector {
 		List<String> responseData = extractTagValueFromXml(responseOutput, "span");
 		for(int i=0; i< responseData.size(); i++){
 			if(responseData.get(i).equals("Display Details Job Status") && responseData.size() >= (i+1)){
+				jobStatus = responseData.get(i+1);
+			} else if(responseData.get(i).equals("DEPLOYMENT Job Status") && responseData.size() >= (i+1)){
 				jobStatus = responseData.get(i+1);
 			}
 		}
