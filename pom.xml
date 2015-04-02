@@ -44,7 +44,7 @@
   
 	<scm>
 		<connection>scm:git:ssh://github.com:jenkinsci/rapiddeploy-plugin.git</connection>
-		<developerConnection>scm:git:git@github.com:jenkinsci/rapiddeploy-plugin.git</developerConnection>
+		<developerConnection>scm:git:ssh://git@github.com:jenkinsci/rapiddeploy-plugin.git</developerConnection>
 		<url>https://github.com/jenkinsci/rapiddeploy-plugin</url>
 	</scm>  
 	
