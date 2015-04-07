@@ -7,7 +7,7 @@
   </parent>
 
   <artifactId>rapiddeploy-jenkins</artifactId>
-  <version>3.3-SNAPSHOT</version>
+  <version>3.4-SNAPSHOT</version>
   <packaging>hpi</packaging>
 
   <!-- get every artifact through repo.jenkins-ci.org, which proxies all the artifacts that we need -->
@@ -52,9 +52,9 @@
 	
 	<developers>
 	    <developer>
-	      <id>sepsyk</id>
-	      <name>Karoly Sepsy</name>
-	      <email>karoly.sepsy@midvision.com</email>
+	      <id>MidVision</id>
+	      <name>MidVision</name>
+	      <email>support@midvision.com</email>
 	    </developer>
   </developers>
 </project>
