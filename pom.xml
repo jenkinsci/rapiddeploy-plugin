@@ -7,7 +7,7 @@
   </parent>
 
   <artifactId>rapiddeploy-jenkins</artifactId>
-  <version>3.4-SNAPSHOT</version>
+  <version>3.4</version>
   <packaging>hpi</packaging>
 
   <!-- get every artifact through repo.jenkins-ci.org, which proxies all the artifacts that we need -->
@@ -46,7 +46,8 @@
 		<connection>scm:git:ssh://github.com/jenkinsci/rapiddeploy-plugin.git</connection>
 		<developerConnection>scm:git:ssh://git@github.com/jenkinsci/rapiddeploy-plugin.git</developerConnection>
 		<url>https://github.com/jenkinsci/rapiddeploy-plugin</url>
-	</scm>  
+	  <tag>rapiddeploy-jenkins-3.4</tag>
+  </scm>  
 	
 	<url>https://wiki.jenkins-ci.org/display/JENKINS/RapidDeploy+plugin</url>
 	
