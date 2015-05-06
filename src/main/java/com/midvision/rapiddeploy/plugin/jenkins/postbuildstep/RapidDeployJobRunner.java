@@ -10,7 +10,7 @@ import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
+import hudson.util.ComboBoxModel ;
 
 import java.io.IOException;
 import java.util.List;
@@ -31,38 +31,88 @@ public class RapidDeployJobRunner extends Notifier {
 	private final String project;	
 	private final String environment;
 	private final String packageName;
+	private final Boolean asynchronousJob;
 	public static final Log logger = LogFactory.getLog(RapidDeployJobRunner.class);
 	
 
 	@DataBoundConstructor
 	public RapidDeployJobRunner(String serverUrl, String authenticationToken,
-			String project, String environment, String packageName) {
+			String project, String environment, String packageName, Boolean asynchronousJob) {
 		super();
 		this.serverUrl = serverUrl;
 		this.authenticationToken = authenticationToken;
 		this.environment = environment;
 		this.packageName = packageName;
 		this.project = project;
+		this.asynchronousJob = asynchronousJob;
 	}
 
 	@Override
 	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,BuildListener listener) {			
-
+		boolean success = true;
 		listener.getLogger().println("Invoking RapidDeploy project deploy via path: " + serverUrl);
 		try {
 			String[] envObjects = environment.split("\\.");
-			if(environment.contains(".") && envObjects.length>3){			
-				String output = RapidDeployConnector.invokeRapidDeployDeployment(authenticationToken, serverUrl, project, envObjects[0], envObjects[1], envObjects[2], envObjects[3], packageName);				
-				listener.getLogger().println(output);
-				
-				listener.getLogger().println("Check the results of the deployments here: " + serverUrl + "/ws/feed/" + project + "/list/jobs");			
-				return true;			
-			} else {
+			String output;
+			if(environment.contains(".") && envObjects.length == 4){					
+				output = RapidDeployConnector.invokeRapidDeployDeployment(authenticationToken, serverUrl, project, envObjects[0], envObjects[1], envObjects[2], envObjects[3], packageName);				
+			} else if(environment.contains(".") && envObjects.length == 3){
+				//support for RD v3.5+ - instance removed
+				output = RapidDeployConnector.invokeRapidDeployDeployment(authenticationToken, serverUrl, project, envObjects[0], envObjects[1], null, envObjects[2], packageName);				
+			} else{
 				listener.getLogger().println("Exception: Invalid environment settings found! " + environment);
 				throw new Exception("Invalid environment settings found!");
 			}
+			listener.getLogger().println("RapidDeploy job has successfully started!");
+				
+			if(!asynchronousJob){
+				String jobId = RapidDeployConnector.extractJobId(output);
+				if(jobId != null){
+					listener.getLogger().println("Checking job status in every 30 seconds...");
+					boolean runningJob = true;
+					//sleep 30sec by default
+					long milisToSleep = 30000;
+					while(runningJob){
+						Thread.sleep(milisToSleep);
+						String jobDetails = RapidDeployConnector.pollRapidDeployJobDetails(authenticationToken, serverUrl, jobId);
+						String jobStatus = RapidDeployConnector.extractJobStatus(jobDetails);
+						
+						listener.getLogger().println("Job status is " + jobStatus);
+						if(jobStatus.equals("DEPLOYING") || jobStatus.equals("QUEUED") || 
+								jobStatus.equals("STARTING") || jobStatus.equals("EXECUTING")){														
+							listener.getLogger().println("Job is running, next check in 30 seconds..");
+							milisToSleep = 30000;
+						} else if(jobStatus.equals("REQUESTED") || jobStatus.equals("REQUESTED_SCHEDULED")){
+							listener.getLogger().println("Job is in a REQUESTED state. Approval may be required in RapidDeploy to continue with execution, next check in 30 seconds..");
+						} else if(jobStatus.equals("SCHEDULED")){
+							listener.getLogger().println("Job is in a SCHEDULED state, execution will start in a future date, next check in 5 minutes..");
+							listener.getLogger().println("Printing out job details");
+							listener.getLogger().println(jobDetails);
+							milisToSleep = 300000;
+						} else{
+						
+							runningJob = false;
+							listener.getLogger().println("Job is finished with status " + jobStatus);
+							if(jobStatus.equals("FAILED") || jobStatus.equals("REJECTED") || 
+									jobStatus.equals("CANCELLED") || jobStatus.equals("UNEXECUTABLE") || 
+									jobStatus.equals("TIMEDOUT") || jobStatus.equals("UNKNOWN")){
+								success = false;
+							}
+						}
+					}
+					} else{
+						throw new Exception("Could not retrieve job id, running asynchronously!");
+					}
+					listener.getLogger().println();
+					String logs = RapidDeployConnector.pollRapidDeployJobLog(authenticationToken, serverUrl, jobId);
+					listener.getLogger().println(logs);
+				} else{			
+					listener.getLogger().println("Job is running asynchronously. You can check the results of the deployments here once finished: " + serverUrl + "/ws/feed/" + project + "/list/jobs");
+				}
+			return success;			
+
 		} catch (Exception e) {
-			listener.getLogger().println("Call failed with error: " + e.getMessage());			
+			listener.getLogger().println("Call failed with error: " + e.getMessage());
 			return false;
 		}
 	}
@@ -85,6 +135,10 @@ public class RapidDeployJobRunner extends Notifier {
 
 	public String getPackageName() {
 		return packageName;
+	}
+	
+	public Boolean getAsynchronousJob(){
+		return asynchronousJob;
 	}
 
 	@Override
@@ -163,8 +217,8 @@ public class RapidDeployJobRunner extends Notifier {
 			return FormValidation.ok();
 		}
 
-		public ListBoxModel doFillProjectItems(@QueryParameter("serverUrl") final String serverUrl, @QueryParameter("authenticationToken") final String authenticationToken) {
-			ListBoxModel items = new ListBoxModel();
+		public ComboBoxModel  doFillProjectItems(@QueryParameter("serverUrl") final String serverUrl, @QueryParameter("authenticationToken") final String authenticationToken) {
+			ComboBoxModel  items = new ComboBoxModel ();
 			if(serverUrl != null && !"".equals(serverUrl) && authenticationToken != null && !"".equals(authenticationToken)){
 				List<String> projects;
 				try {
@@ -179,8 +233,8 @@ public class RapidDeployJobRunner extends Notifier {
 			return items;
 		}
 
-		public ListBoxModel doFillEnvironmentItems(@QueryParameter("serverUrl") final String serverUrl, @QueryParameter("authenticationToken") final String authenticationToken, @QueryParameter("project") final String project) {
-			ListBoxModel items = new ListBoxModel();
+		public ComboBoxModel  doFillEnvironmentItems(@QueryParameter("serverUrl") final String serverUrl, @QueryParameter("authenticationToken") final String authenticationToken, @QueryParameter("project") final String project) {
+			ComboBoxModel  items = new ComboBoxModel ();
 			if(serverUrl != null && !"".equals(serverUrl) && authenticationToken != null && !"".equals(authenticationToken) && project != null && !"".equals(project)){
 				List<String> environments;
 				try {
@@ -197,8 +251,8 @@ public class RapidDeployJobRunner extends Notifier {
 			return items;
 		}
 		
-		public ListBoxModel doFillPackageNameItems(@QueryParameter("serverUrl") final String serverUrl, @QueryParameter("authenticationToken") final String authenticationToken, @QueryParameter("project") final String project, @QueryParameter("environment") final String environment) {
-			ListBoxModel items = new ListBoxModel();
+		public ComboBoxModel  doFillPackageNameItems(@QueryParameter("serverUrl") final String serverUrl, @QueryParameter("authenticationToken") final String authenticationToken, @QueryParameter("project") final String project, @QueryParameter("environment") final String environment) {
+			ComboBoxModel  items = new ComboBoxModel ();
 			if(serverUrl != null && !"".equals(serverUrl) && authenticationToken != null && !"".equals(authenticationToken) && project != null && !"".equals(project) && environment != null && !"".equals(environment)){
 				if(environment.contains(".")){
 					String[] envObjects = environment.split("\\.");

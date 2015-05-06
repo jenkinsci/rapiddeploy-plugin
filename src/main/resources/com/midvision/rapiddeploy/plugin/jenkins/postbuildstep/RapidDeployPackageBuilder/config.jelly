@@ -18,7 +18,7 @@
   </f:entry>
             
   <f:entry id="project" title="Project" name="project" field="project">  
-  	<f:select/>
+  	<f:combobox/>
   </f:entry>
   
   <f:validateButton
@@ -32,7 +32,7 @@
   </f:optionalBlock>
   
   <f:entry title="Archive extension" field="archiveExension">
-    <f:select />
+    <f:combobox />
   </f:entry>
     
   

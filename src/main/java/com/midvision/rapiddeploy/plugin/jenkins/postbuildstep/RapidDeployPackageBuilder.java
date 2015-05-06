@@ -11,7 +11,7 @@ import hudson.tasks.Builder;
 import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
+import hudson.util.ComboBoxModel ;
 
 import java.io.IOException;
 import java.util.List;
@@ -51,16 +51,10 @@ public class RapidDeployPackageBuilder extends Notifier {
 	@Override
 	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,BuildListener listener) {			
 
-		listener.getLogger().println("Invoking RapidDeploy project deploy via path: " + serverUrl);
-		listener.getLogger().println(project);
-		listener.getLogger().println("enable custom package name: " + enableCustomPackageName);
-		listener.getLogger().println(packageName);
-		listener.getLogger().println(archiveExension);
+		listener.getLogger().println("Invoking RapidDeploy package builder via path: " + serverUrl);		
 		try {						
 			String output = RapidDeployConnector.invokeRapidDeployBuildPackage(getAuthenticationToken(), getServerUrl(), getProject(), getPackageName(), getArchiveExension());
-			listener.getLogger().println(output);
-				
-			listener.getLogger().println("Check the results of the deployments here: " + serverUrl + "/ws/feed/" + project + "/list/jobs");			
+			listener.getLogger().println("Package build successfully requested!");		
 			return true;			
 			
 		} catch (Exception e) {
@@ -201,8 +195,8 @@ public class RapidDeployPackageBuilder extends Notifier {
 			return FormValidation.ok();
 		}
 
-		public ListBoxModel doFillProjectItems(@QueryParameter("serverUrl") final String serverUrl, @QueryParameter("authenticationToken") final String authenticationToken) {
-			ListBoxModel items = new ListBoxModel();
+		public ComboBoxModel  doFillProjectItems(@QueryParameter("serverUrl") final String serverUrl, @QueryParameter("authenticationToken") final String authenticationToken) {
+			ComboBoxModel  items = new ComboBoxModel ();
 			if(serverUrl != null && !"".equals(serverUrl) && authenticationToken != null && !"".equals(authenticationToken)){
 				List<String> projects;
 				try {
@@ -218,8 +212,8 @@ public class RapidDeployPackageBuilder extends Notifier {
 		}
 						
 		
-		public ListBoxModel doFillArchiveExensionItems() {
-			ListBoxModel items = new ListBoxModel();
+		public ComboBoxModel  doFillArchiveExensionItems() {
+			ComboBoxModel  items = new ComboBoxModel ();
 			items.add("jar");
 			items.add("war");
 			items.add("ear");			
