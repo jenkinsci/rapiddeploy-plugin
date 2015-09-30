@@ -131,7 +131,11 @@ public class RapidDeployConnector {
 	
 	private static String buildPackageListQueryUrl(String serverUrl, String authenticationToken, String projectName, String server, String environment, String instance) {
 		StringBuilder url = new StringBuilder("");
-		url.append(serverUrl).append("/ws/deployment/" + projectName + "/package/list/" + server + "/" + environment + "/" + instance);		
+		if (instance == null) {
+			url.append(serverUrl).append("/ws/deployment/" + projectName + "/package/list/" + server + "/" + environment);
+		} else {
+			url.append(serverUrl).append("/ws/deployment/" + projectName + "/package/list/" + server + "/" + environment + "/" + instance);
+		}
 		return url.toString();
 	}
 	
