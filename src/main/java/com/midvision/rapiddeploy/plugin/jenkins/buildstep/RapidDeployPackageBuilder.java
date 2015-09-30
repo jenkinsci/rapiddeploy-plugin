@@ -8,16 +8,14 @@ import hudson.model.AbstractProject;
 import hudson.tasks.BuildStepDescriptor;
 import hudson.tasks.BuildStepMonitor;
 import hudson.tasks.Builder;
+import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
-import hudson.util.ComboBoxModel ;
 
 import java.io.IOException;
 import java.util.List;
 
 import javax.servlet.ServletException;
 
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -27,35 +25,30 @@ public class RapidDeployPackageBuilder extends Builder {
 
 	private final String serverUrl;
 	private final String authenticationToken;
-	private final String project;	
+	private final String project;
 	private final boolean enableCustomPackageName;
 	private final String packageName;
 	private final String archiveExension;
-	public static final Log logger = LogFactory.getLog(RapidDeployPackageBuilder.class);
-	
 
 	@DataBoundConstructor
-	public RapidDeployPackageBuilder(String serverUrl, String authenticationToken,
-			String project, boolean enableCustomPackageName, String packageName, String archiveExension) {
+	public RapidDeployPackageBuilder(String serverUrl, String authenticationToken, String project, boolean enableCustomPackageName, String packageName,
+			String archiveExension) {
 		super();
 		this.serverUrl = serverUrl;
 		this.authenticationToken = authenticationToken;
 		this.project = project;
 		this.enableCustomPackageName = enableCustomPackageName;
-		this.packageName = packageName;		
+		this.packageName = packageName;
 		this.archiveExension = archiveExension;
 	}
 
 	@Override
-	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher,BuildListener listener) {			
-
-		listener.getLogger().println("Invoking RapidDeploy package builder via path: " + serverUrl);		
-		try {						
-			String output = RapidDeployConnector.invokeRapidDeployBuildPackage(getAuthenticationToken(), getServerUrl(), getProject(), getPackageName(), getArchiveExension());
+	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
+		listener.getLogger().println("Invoking RapidDeploy package builder via path: " + serverUrl);
+		try {
+			RapidDeployConnector.invokeRapidDeployBuildPackage(getAuthenticationToken(), getServerUrl(), getProject(), getPackageName(), getArchiveExension());
 			listener.getLogger().println("Package build successfully requested!");
-				
-			return true;			
-			
+			return true;
 		} catch (Exception e) {
 			listener.getLogger().println("Call failed with error: " + e.getMessage());
 			return false;
@@ -79,148 +72,151 @@ public class RapidDeployPackageBuilder extends Builder {
 	}
 
 	public String getPackageName() {
-		if(enableCustomPackageName){
+		if (enableCustomPackageName) {
 			return packageName;
-		} else{
+		} else {
 			return "";
 		}
 	}
-	
-	public String getArchiveExension(){
+
+	public String getArchiveExension() {
 		return archiveExension;
 	}
 
-	@Override
-	public BuildStepDescriptor getDescriptor() {
-		return (DescriptorImpl) super.getDescriptor();
-	}
-
-	/**
-	 * Descriptor for {@link RapidDeployPackageBuilder}. Used as a singleton. The
-	 * class is marked as public so that it can be accessed from views.
-	 */		
-
-	
 	public BuildStepMonitor getRequiredMonitorService() {
 		// run anyway
 		return BuildStepMonitor.NONE;
 	}
 
+	/**
+	 * Descriptor for {@link RapidDeployPackageBuilder}. Used as a singleton.
+	 * The class is marked as public so that it can be accessed from views.
+	 */
 	@Extension
-	public static final class DescriptorImpl extends
-			BuildStepDescriptor<Builder> {
-		
+	public static final class DescriptorImpl extends BuildStepDescriptor<Builder> {
+
 		public DescriptorImpl() {
 			super(RapidDeployPackageBuilder.class);
 			load();
 		}
 
-		// check serverurl field
-		public FormValidation doCheckServerUrl(@QueryParameter String value)
-				throws IOException, ServletException {
-			return checkNotEmpty(value);
-		}
-
-		// check authenticationToken field
-		public FormValidation doCheckAuthenticationToken(
-				@QueryParameter String value) throws IOException,
-				ServletException {
-			return checkNotEmpty(value);
-		}
-						
-		public FormValidation doGetPackages(@QueryParameter("serverUrl") final String serverUrl, @QueryParameter("authenticationToken") final String authenticationToken, @QueryParameter("project") final String project) throws IOException, ServletException {
-		    try {
-		    	String packageList = "";
-		    	if(serverUrl != null && !"".equals(serverUrl) && authenticationToken != null && !"".equals(authenticationToken) && project != null && !"".equals(project)){
-					List<String> packageNames;
-					try {								
-						packageNames = RapidDeployConnector.invokeRapidDeployListPackages(authenticationToken, serverUrl, project);
-						if(packageNames != null && packageNames.size()>0){
-							packageList = "<table>";
-							int index = 0;
-							int limit = 10;
-							for(String packageName : packageNames){
-								if(!"null".equals(packageName)){
-									packageList += "<tr><td class=\"setting-main\">";
-									packageList += packageName;
-									packageList += "</td></tr>";
-									index++;
-									if(index >= limit){
-										break;
-									}
-								}							
-							}
-							packageList += "</table>";
-						} else{
-							packageList = "No deployment packages exist";
-						}
-					} catch (Exception e) {					
-						e.printStackTrace();
-					}				
-				}
-		    	
-		        return FormValidation.okWithMarkup(packageList);
-		    } catch (Exception e) {
-		        return FormValidation.error("Client error : "+e.getMessage());
-		    }
-		}
-
+		@SuppressWarnings("rawtypes")
+		@Override
 		public boolean isApplicable(Class<? extends AbstractProject> aClass) {
 			// Indicates that this builder can be used with all kinds of project
 			// types
 			return true;
 		}
 
-//		@Override
-//		public boolean configure(StaplerRequest req, JSONObject json)
-//				throws FormException {
-//						
-//			save();
-//			return super.configure(req, json);
-//		}
-
 		/**
 		 * This human readable name is used in the configuration screen.
 		 */
+		@Override
 		public String getDisplayName() {
-			return "RapidDeploy package build";
+			return "RapidDeploy deployment package build";
 		}
 
-		public FormValidation checkNotEmpty(String value) {
-			if (value.length() == 0) {
-				return FormValidation
-						.error("Please set a value for this field!");
-			}
-			return FormValidation.ok();
+		/** SERVER URL FIELD **/
+
+		public FormValidation doCheckServerUrl(@QueryParameter String value) throws IOException, ServletException {
+			return checkNotEmpty(value);
 		}
 
-		public ComboBoxModel  doFillProjectItems(@QueryParameter("serverUrl") final String serverUrl, @QueryParameter("authenticationToken") final String authenticationToken) {
-			ComboBoxModel  items = new ComboBoxModel ();
-			if(serverUrl != null && !"".equals(serverUrl) && authenticationToken != null && !"".equals(authenticationToken)){
+		/** AUTHENTICATION TOKEN FIELD **/
+
+		public FormValidation doCheckAuthenticationToken(@QueryParameter String value) throws IOException, ServletException {
+			return checkNotEmpty(value);
+		}
+
+		/** PROJECT FIELD **/
+
+		public FormValidation doCheckProject(@QueryParameter String value) throws IOException, ServletException {
+			return checkNotEmpty(value);
+		}
+
+		public ComboBoxModel doFillProjectItems(@QueryParameter("serverUrl") final String serverUrl,
+				@QueryParameter("authenticationToken") final String authenticationToken) {
+			ComboBoxModel items = new ComboBoxModel();
+			if (serverUrl != null && !"".equals(serverUrl) && authenticationToken != null && !"".equals(authenticationToken)) {
 				List<String> projects;
 				try {
 					projects = RapidDeployConnector.invokeRapidDeployListProjects(authenticationToken, serverUrl);
-					for(String projectName : projects){
+					for (String projectName : projects) {
 						items.add(projectName);
 					}
-				} catch (Exception e) {					
+				} catch (Exception e) {
 					e.printStackTrace();
-				}				
-			}			
-			return items;
-		}
-						
-		
-		public ComboBoxModel  doFillArchiveExensionItems() {
-			ComboBoxModel  items = new ComboBoxModel ();
-			items.add("jar");
-			items.add("war");
-			items.add("ear");			
-			items.add("tar");
-			items.add("rar");
-			items.add("zip");			
+				}
+			}
 			return items;
 		}
 
+		public FormValidation doGetPackages(@QueryParameter("serverUrl") final String serverUrl,
+				@QueryParameter("authenticationToken") final String authenticationToken, @QueryParameter("project") final String project) throws IOException,
+				ServletException {
+			try {
+				String packageList = "";
+				if (serverUrl != null && !"".equals(serverUrl) && authenticationToken != null && !"".equals(authenticationToken) && project != null
+						&& !"".equals(project)) {
+					List<String> packageNames;
+					try {
+						packageNames = RapidDeployConnector.invokeRapidDeployListPackages(authenticationToken, serverUrl, project);
+						if (packageNames != null && packageNames.size() > 0) {
+							packageList = "<table>";
+							int index = 0;
+							int limit = 10;
+							for (String packageName : packageNames) {
+								if (!"null".equals(packageName) && !packageName.startsWith("Deployment")) {
+									packageList += "<tr><td class=\"setting-main\">";
+									packageList += packageName;
+									packageList += "</td></tr>";
+									index++;
+									if (index >= limit) {
+										break;
+									}
+								}
+							}
+							packageList += "</table>";
+						} else {
+							packageList = "There are no deployment packages for '" + project + "'.";
+						}
+					} catch (Exception e) {
+						e.printStackTrace();
+					}
+				}
+				return FormValidation.okWithMarkup(packageList);
+			} catch (Exception e) {
+				return FormValidation.error("Client error : " + e.getMessage());
+			}
+		}
+
+		/** ARCHIVE EXTENSION FIELD **/
+
+		public FormValidation doCheckArchiveExension(@QueryParameter String value) throws IOException, ServletException {
+			if (value.equals("jar") || value.equals("war") || value.equals("ear") || value.equals("tar") || value.equals("rar") || value.equals("zip")) {
+				return FormValidation.ok();
+			}
+			return FormValidation.error("Please use one of the following values: jar, war, ear, tar, rar or zip.");
+		}
+
+		public ComboBoxModel doFillArchiveExensionItems() {
+			ComboBoxModel items = new ComboBoxModel();
+			items.add("jar");
+			items.add("war");
+			items.add("ear");
+			items.add("tar");
+			items.add("rar");
+			items.add("zip");
+			return items;
+		}
+
+		/** AUX **/
+
+		public FormValidation checkNotEmpty(String value) {
+			if (value.length() == 0) {
+				return FormValidation.error("Please set a value for this field!");
+			}
+			return FormValidation.ok();
+		}
 	}
 }
