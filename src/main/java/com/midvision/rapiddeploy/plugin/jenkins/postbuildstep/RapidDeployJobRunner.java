@@ -20,7 +20,7 @@ import javax.servlet.ServletException;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
-import com.midvision.rapiddeploy.plugin.jenkins.RapidDeployConnector;
+import com.midvision.rapiddeploy.connector.RapidDeployConnector;
 
 public class RapidDeployJobRunner extends Notifier {
 
@@ -47,18 +47,11 @@ public class RapidDeployJobRunner extends Notifier {
 		boolean success = true;
 		listener.getLogger().println("Invoking RapidDeploy project deploy via path: " + serverUrl);
 		try {
-			String[] envObjects = environment.split("\\.");
-			String output;
-			if (environment.contains(".") && envObjects.length == 4) {
-				output = RapidDeployConnector.invokeRapidDeployDeployment(authenticationToken, serverUrl, project, envObjects[0], envObjects[1], envObjects[2],
-						envObjects[3], packageName);
-			} else if (environment.contains(".") && envObjects.length == 3) {
-				// support for RD v3.5+ - instance removed
-				output = RapidDeployConnector.invokeRapidDeployDeployment(authenticationToken, serverUrl, project, envObjects[0], envObjects[1], null,
-						envObjects[2], packageName);
-			} else {
-				listener.getLogger().println("Exception: Invalid environment settings found! " + environment);
-				throw new Exception("Invalid environment settings found!");
+			String output = "";
+			try {
+				output = RapidDeployConnector.invokeRapidDeployDeploymentPollOutput(authenticationToken, serverUrl, project, environment, packageName, true);
+			} catch (Exception e) {
+				throw new Exception("Invalid environment settings found! " + environment);
 			}
 			listener.getLogger().println("RapidDeploy job has successfully started!");
 

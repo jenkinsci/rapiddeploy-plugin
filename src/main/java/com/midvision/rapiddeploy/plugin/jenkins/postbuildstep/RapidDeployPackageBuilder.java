@@ -20,7 +20,7 @@ import javax.servlet.ServletException;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
-import com.midvision.rapiddeploy.plugin.jenkins.RapidDeployConnector;
+import com.midvision.rapiddeploy.connector.RapidDeployConnector;
 
 public class RapidDeployPackageBuilder extends Notifier {
 
@@ -47,7 +47,8 @@ public class RapidDeployPackageBuilder extends Notifier {
 	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
 		listener.getLogger().println("Invoking RapidDeploy package builder via path: " + serverUrl);
 		try {
-			RapidDeployConnector.invokeRapidDeployBuildPackage(getAuthenticationToken(), getServerUrl(), getProject(), getPackageName(), getArchiveExension());
+			RapidDeployConnector.invokeRapidDeployBuildPackage(getAuthenticationToken(), getServerUrl(), getProject(), getPackageName(), getArchiveExension(),
+					true);
 			listener.getLogger().println("Package build successfully requested!");
 			return true;
 		} catch (Exception e) {
