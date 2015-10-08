@@ -56,9 +56,9 @@ public class RapidDeployPackageBuilder extends Notifier {
 		listener.getLogger().println("  > Package name: " + packageName);
 		listener.getLogger().println("  > Archive extension: " + archiveExtension);
 		try {
-			RapidDeployConnector.invokeRapidDeployBuildPackage(getAuthenticationToken(), getServerUrl(), getProject(), getPackageName(), getArchiveExtension(),
-					true);
-			listener.getLogger().println("Package build successfully requested!");
+			String output = RapidDeployConnector.invokeRapidDeployBuildPackage(getAuthenticationToken(), getServerUrl(), getProject(), getPackageName(),
+					getArchiveExtension(), true);
+			listener.getLogger().println(output);
 			return true;
 		} catch (Exception e) {
 			listener.getLogger().println("Call failed with error: " + e.getMessage());

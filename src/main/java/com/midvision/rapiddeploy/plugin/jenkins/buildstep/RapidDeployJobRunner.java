@@ -49,68 +49,22 @@ public class RapidDeployJobRunner extends Builder {
 
 	@Override
 	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
-		boolean success = true;
 		listener.getLogger().println("Invoking RapidDeploy project deploy via path...");
 		listener.getLogger().println("  > Server URL: " + serverUrl);
 		listener.getLogger().println("  > Project: " + project);
 		listener.getLogger().println("  > Environment: " + environment);
-		listener.getLogger().println("  > Packages: " + packageName);
+		listener.getLogger().println("  > Package: " + packageName);
 		listener.getLogger().println("  > Asynchronous? " + asynchronousJob);
 		try {
-			String output = "";
-			try {
-				output = RapidDeployConnector.invokeRapidDeployDeploymentPollOutput(authenticationToken, serverUrl, project, environment, packageName, true);
-			} catch (Exception e) {
-				throw new Exception("Invalid environment settings found! " + environment);
-			}
-			listener.getLogger().println("RapidDeploy job has successfully started!");
-
-			if (!asynchronousJob) {
-				String jobId = RapidDeployConnector.extractJobId(output);
-				if (jobId != null) {
-					listener.getLogger().println("Checking job status in every 30 seconds...");
-					boolean runningJob = true;
-					// sleep 30sec by default
-					long milisToSleep = 30000;
-					while (runningJob) {
-						Thread.sleep(milisToSleep);
-						String jobDetails = RapidDeployConnector.pollRapidDeployJobDetails(authenticationToken, serverUrl, jobId);
-						String jobStatus = RapidDeployConnector.extractJobStatus(jobDetails);
-
-						listener.getLogger().println("Job status is " + jobStatus);
-						if (jobStatus.equals("DEPLOYING") || jobStatus.equals("QUEUED") || jobStatus.equals("STARTING") || jobStatus.equals("EXECUTING")) {
-							listener.getLogger().println("Job is running, next check in 30 seconds..");
-							milisToSleep = 30000;
-						} else if (jobStatus.equals("REQUESTED") || jobStatus.equals("REQUESTED_SCHEDULED")) {
-							listener.getLogger()
-									.println(
-											"Job is in a REQUESTED state. Approval may be required in RapidDeploy to continue with execution, next check in 30 seconds..");
-						} else if (jobStatus.equals("SCHEDULED")) {
-							listener.getLogger().println("Job is in a SCHEDULED state, execution will start in a future date, next check in 5 minutes..");
-							listener.getLogger().println("Printing out job details");
-							listener.getLogger().println(jobDetails);
-							milisToSleep = 300000;
-						} else {
-							runningJob = false;
-							listener.getLogger().println("Job is finished with status " + jobStatus);
-							if (jobStatus.equals("FAILED") || jobStatus.equals("REJECTED") || jobStatus.equals("CANCELLED") || jobStatus.equals("UNEXECUTABLE")
-									|| jobStatus.equals("TIMEDOUT") || jobStatus.equals("UNKNOWN")) {
-								success = false;
-							}
-						}
-					}
-				} else {
-					throw new Exception("Could not retrieve job id, running asynchronously!");
-				}
-				listener.getLogger().println();
-				String logs = RapidDeployConnector.pollRapidDeployJobLog(authenticationToken, serverUrl, jobId);
-				listener.getLogger().println(logs);
-			} else {
+			String output = RapidDeployConnector.invokeRapidDeployDeploymentPollOutput(authenticationToken, serverUrl, project, environment, packageName, true,
+					asynchronousJob);
+			listener.getLogger().println(output);
+			if (asynchronousJob) {
 				listener.getLogger().println(
-						"Job is running asynchronously. You can check the results of the deployments here once finished: " + serverUrl + "/ws/feed/" + project
+						"Job running asynchronously. You can check the results of the deployments here once finished: " + serverUrl + "/ws/feed/" + project
 								+ "/list/jobs");
 			}
-			return success;
+			return true;
 		} catch (Exception e) {
 			listener.getLogger().println("Call failed with error: " + e.getMessage());
 			return false;
@@ -252,11 +206,11 @@ public class RapidDeployJobRunner extends Builder {
 
 		/** PACKAGE FIELD **/
 
-		public ComboBoxModel doFillPackageNameItems(@QueryParameter("serverUrl") final String serverUrl,
+		public ListBoxModel doFillPackageNameItems(@QueryParameter("serverUrl") final String serverUrl,
 				@QueryParameter("authenticationToken") final String authenticationToken, @QueryParameter("project") final String project,
 				@QueryParameter("environment") final String environment) {
 			logger.debug("doFillPackageNameItems");
-			ComboBoxModel items = new ComboBoxModel();
+			ListBoxModel items = new ListBoxModel();
 			if (!getProjects(serverUrl, authenticationToken).isEmpty()) {
 				String[] envObjects = environment.split("\\.");
 				List<String> packageNames = new ArrayList<String>();
