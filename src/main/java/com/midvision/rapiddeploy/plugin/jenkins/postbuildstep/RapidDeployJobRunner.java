@@ -11,12 +11,16 @@ import hudson.tasks.Notifier;
 import hudson.tasks.Publisher;
 import hudson.util.ComboBoxModel;
 import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 import javax.servlet.ServletException;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
@@ -30,6 +34,8 @@ public class RapidDeployJobRunner extends Notifier {
 	private final String environment;
 	private final String packageName;
 	private final Boolean asynchronousJob;
+
+	private static final Log logger = LogFactory.getLog(RapidDeployJobRunner.class);
 
 	@DataBoundConstructor
 	public RapidDeployJobRunner(String serverUrl, String authenticationToken, String project, String environment, String packageName, Boolean asynchronousJob) {
@@ -45,7 +51,12 @@ public class RapidDeployJobRunner extends Notifier {
 	@Override
 	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
 		boolean success = true;
-		listener.getLogger().println("Invoking RapidDeploy project deploy via path: " + serverUrl);
+		listener.getLogger().println("Invoking RapidDeploy project deploy via path...");
+		listener.getLogger().println("  > Server URL: " + serverUrl);
+		listener.getLogger().println("  > Project: " + project);
+		listener.getLogger().println("  > Environment: " + environment);
+		listener.getLogger().println("  > Packages: " + packageName);
+		listener.getLogger().println("  > Asynchronous? " + asynchronousJob);
 		try {
 			String output = "";
 			try {
@@ -132,7 +143,6 @@ public class RapidDeployJobRunner extends Notifier {
 	}
 
 	public BuildStepMonitor getRequiredMonitorService() {
-		// run anyway
 		return BuildStepMonitor.NONE;
 	}
 
@@ -142,6 +152,13 @@ public class RapidDeployJobRunner extends Notifier {
 	 */
 	@Extension
 	public static final class DescriptorImpl extends BuildStepDescriptor<Publisher> {
+
+		final private static String NOT_EMPTY_MESSAGE = "Please set a value for this field!";
+		final private static String NO_PROTOCOL_MESSAGE = "Please specify a protocol for the URL, e.g. \"http://\".";
+		final private static String CONNECTION_BAD_MESSAGE = "Unable to establish connection.";
+
+		private List<String> projects;
+		private boolean newConnection = true;
 
 		public DescriptorImpl() {
 			super(RapidDeployJobRunner.class);
@@ -167,49 +184,58 @@ public class RapidDeployJobRunner extends Notifier {
 		/** SERVER URL FIELD **/
 
 		public FormValidation doCheckServerUrl(@QueryParameter String value) throws IOException, ServletException {
-			return checkNotEmpty(value);
+			logger.debug("doCheckServerUrl");
+			newConnection = true;
+			if (value.length() == 0) {
+				return FormValidation.error(NOT_EMPTY_MESSAGE);
+			} else if (!value.startsWith("http://") && !value.startsWith("https://")) {
+				return FormValidation.warning(NO_PROTOCOL_MESSAGE);
+			}
+			return FormValidation.ok();
 		}
 
 		/** AUTHENTICATION TOKEN FIELD **/
 
 		public FormValidation doCheckAuthenticationToken(@QueryParameter String value) throws IOException, ServletException {
-			return checkNotEmpty(value);
+			logger.debug("doCheckAuthenticationToken");
+			newConnection = true;
+			if (value.length() == 0) {
+				return FormValidation.error(NOT_EMPTY_MESSAGE);
+			}
+			return FormValidation.ok();
+		}
+
+		/** LOAD PROJECTS BUTTON **/
+
+		public FormValidation doLoadProjects(@QueryParameter("serverUrl") final String serverUrl,
+				@QueryParameter("authenticationToken") final String authenticationToken) throws IOException, ServletException {
+			logger.debug("doLoadProjects");
+			newConnection = true;
+			if (getProjects(serverUrl, authenticationToken).isEmpty()) {
+				return FormValidation.error(CONNECTION_BAD_MESSAGE);
+			}
+			return FormValidation.ok();
 		}
 
 		/** PROJECT FIELD **/
 
-		public FormValidation doCheckProject(@QueryParameter String value) throws IOException, ServletException {
-			return checkNotEmpty(value);
-		}
-
-		public ComboBoxModel doFillProjectItems(@QueryParameter("serverUrl") final String serverUrl,
+		public ListBoxModel doFillProjectItems(@QueryParameter("serverUrl") final String serverUrl,
 				@QueryParameter("authenticationToken") final String authenticationToken) {
-			ComboBoxModel items = new ComboBoxModel();
-			if (serverUrl != null && !"".equals(serverUrl) && authenticationToken != null && !"".equals(authenticationToken)) {
-				List<String> projects;
-				try {
-					projects = RapidDeployConnector.invokeRapidDeployListProjects(authenticationToken, serverUrl);
-					for (String projectName : projects) {
-						items.add(projectName);
-					}
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+			logger.debug("doFillProjectItems");
+			ListBoxModel items = new ListBoxModel();
+			for (String projectName : getProjects(serverUrl, authenticationToken)) {
+				items.add(projectName);
 			}
 			return items;
 		}
 
 		/** ENVIRONMENT FIELD **/
 
-		public FormValidation doCheckEnvironment(@QueryParameter String value) throws IOException, ServletException {
-			return checkNotEmpty(value);
-		}
-
-		public ComboBoxModel doFillEnvironmentItems(@QueryParameter("serverUrl") final String serverUrl,
+		public ListBoxModel doFillEnvironmentItems(@QueryParameter("serverUrl") final String serverUrl,
 				@QueryParameter("authenticationToken") final String authenticationToken, @QueryParameter("project") final String project) {
-			ComboBoxModel items = new ComboBoxModel();
-			if (serverUrl != null && !"".equals(serverUrl) && authenticationToken != null && !"".equals(authenticationToken) && project != null
-					&& !"".equals(project)) {
+			logger.debug("doFillEnvironmentItems");
+			ListBoxModel items = new ListBoxModel();
+			if (!getProjects(serverUrl, authenticationToken).isEmpty()) {
 				List<String> environments;
 				try {
 					environments = RapidDeployConnector.invokeRapidDeployListEnvironments(authenticationToken, serverUrl, project);
@@ -219,7 +245,7 @@ public class RapidDeployJobRunner extends Notifier {
 						}
 					}
 				} catch (Exception e) {
-					e.printStackTrace();
+					logger.warn(e.getMessage());
 				}
 			}
 			return items;
@@ -230,32 +256,30 @@ public class RapidDeployJobRunner extends Notifier {
 		public ComboBoxModel doFillPackageNameItems(@QueryParameter("serverUrl") final String serverUrl,
 				@QueryParameter("authenticationToken") final String authenticationToken, @QueryParameter("project") final String project,
 				@QueryParameter("environment") final String environment) {
+			logger.debug("doFillPackageNameItems");
 			ComboBoxModel items = new ComboBoxModel();
-			if (serverUrl != null && !"".equals(serverUrl) && authenticationToken != null && !"".equals(authenticationToken) && project != null
-					&& !"".equals(project) && environment != null && !"".equals(environment)) {
-				if (environment.contains(".")) {
-					String[] envObjects = environment.split("\\.");
-					List<String> packageNames;
-					try {
-						items.add("LATEST");
-						if (environment.contains(".") && envObjects.length == 4) {
-							packageNames = RapidDeployConnector.invokeRapidDeployListPackages(authenticationToken, serverUrl, project, envObjects[0],
-									envObjects[1], envObjects[2]);
-						} else if (environment.contains(".") && envObjects.length == 3) {
-							// support for RD v3.5+ - instance removed
-							packageNames = RapidDeployConnector.invokeRapidDeployListPackages(authenticationToken, serverUrl, project, envObjects[0],
-									envObjects[1], null);
-						} else {
-							throw new Exception("Invalid environment settings found!");
-						}
-						for (String packageName : packageNames) {
-							if (!"null".equals(packageName) && !packageName.startsWith("Deployment")) {
-								items.add(packageName);
-							}
-						}
-					} catch (Exception e) {
-						e.printStackTrace();
+			if (!getProjects(serverUrl, authenticationToken).isEmpty()) {
+				String[] envObjects = environment.split("\\.");
+				List<String> packageNames = new ArrayList<String>();
+				try {
+					items.add("LATEST");
+					if (environment.contains(".") && envObjects.length == 4) {
+						packageNames = RapidDeployConnector.invokeRapidDeployListPackages(authenticationToken, serverUrl, project, envObjects[0],
+								envObjects[1], envObjects[2]);
+					} else if (environment.contains(".") && envObjects.length == 3) {
+						// support for RD v3.5+ - instance removed
+						packageNames = RapidDeployConnector.invokeRapidDeployListPackages(authenticationToken, serverUrl, project, envObjects[0],
+								envObjects[1], null);
+					} else {
+						logger.error("Invalid environment settings found! Environment: " + environment);
 					}
+					for (String packageName : packageNames) {
+						if (!"null".equals(packageName) && !packageName.startsWith("Deployment")) {
+							items.add(packageName);
+						}
+					}
+				} catch (Exception e) {
+					logger.warn(e.getMessage());
 				}
 			}
 			return items;
@@ -263,11 +287,26 @@ public class RapidDeployJobRunner extends Notifier {
 
 		/** AUX **/
 
-		public FormValidation checkNotEmpty(String value) {
-			if (value.length() == 0) {
-				return FormValidation.error("Please set a value for this field!");
+		/** Method to cache the projects to ease the form validation **/
+		private synchronized List<String> getProjects(final String serverUrl, final String authenticationToken) {
+			logger.debug("getProjects");
+			if (projects == null || projects.isEmpty() || newConnection) {
+				try {
+					if (serverUrl != null && !"".equals(serverUrl) && authenticationToken != null && !"".equals(authenticationToken)) {
+						logger.debug("REQUEST TO WEB SERVICE GET PROJECTS...");
+						projects = RapidDeployConnector.invokeRapidDeployListProjects(authenticationToken, serverUrl);
+						newConnection = false;
+						logger.debug("PROJECTS RETRIEVED: " + projects.size());
+					} else {
+						projects = new ArrayList<String>();
+					}
+				} catch (Exception e) {
+					logger.warn(e.getMessage());
+					projects = new ArrayList<String>();
+				}
 			}
-			return FormValidation.ok();
+			logger.debug("PROJECTS: " + projects.size());
+			return projects;
 		}
 	}
 }

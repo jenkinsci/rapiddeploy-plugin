@@ -1,6 +1,8 @@
 <j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
 	xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
 
+	<j:set var="id" value="${h.generateId()}" />
+
 	<f:entry title="RapidDeploy server URL" field="serverUrl">
 		<f:textbox />
 	</f:entry>
@@ -9,12 +11,25 @@
 		<f:password />
 	</f:entry>
 
-	<f:entry id="project" title="Project" name="project" field="project">
-		<f:combobox />
+	<f:entry>
+		<div style="float:right">
+			<input type="button" value="Load projects" class="yui-button validate-button"
+				onclick="validateButton('${descriptor.descriptorFullUrl}/loadProjects','serverUrl,authenticationToken',this); updateListBox('${id}','${descriptor.descriptorFullUrl}/fillProjectItems')" />
+		</div>
+		<div style="display:none;">
+			<img src="${imagesURL}/spinner.gif" />
+			Loading projects...
+		</div>
+		<div></div>
 	</f:entry>
 
-	<f:validateButton title="${%Show recent packages}"
-		method="getPackages" with="serverUrl,authenticationToken,project" />
+	<f:entry title="Project" field="project">
+		<f:select id="${id}" />
+	</f:entry>
+
+	<f:validateButton title="Show recent packages"
+		progress="Loading packages..." method="getPackages"
+		with="serverUrl,authenticationToken,project" />
 
 	<f:optionalBlock field="enableCustomPackageName" title="Use custom package name"
 		inline="true">
@@ -23,8 +38,8 @@
 		</f:entry>
 	</f:optionalBlock>
 
-	<f:entry title="Archive extension" field="archiveExension">
-		<f:combobox />
+	<f:entry title="Archive extension" field="archiveExtension">
+		<f:select />
 	</f:entry>
 
 </j:jelly>
