@@ -25,6 +25,7 @@ import org.kohsuke.stapler.QueryParameter;
 
 import com.midvision.rapiddeploy.connector.RapidDeployConnector;
 
+@SuppressWarnings("unchecked")
 public class RapidDeployPackageBuilder extends Notifier {
 
 	private final String serverUrl;
