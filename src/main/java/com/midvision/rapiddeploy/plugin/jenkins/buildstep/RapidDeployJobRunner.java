@@ -54,14 +54,54 @@ public class RapidDeployJobRunner extends Builder {
 		listener.getLogger().println("  > Environment: " + environment);
 		listener.getLogger().println("  > Package: " + packageName);
 		listener.getLogger().println("  > Asynchronous? " + asynchronousJob);
+		listener.getLogger().println();
 		try {
-			String output = RapidDeployConnector.invokeRapidDeployDeploymentPollOutput(authenticationToken, serverUrl, project, environment, packageName, true,
-					asynchronousJob);
-			listener.getLogger().println(output);
-			if (asynchronousJob) {
-				listener.getLogger().println(
-						"Job running asynchronously. You can check the results of the deployments here once finished: " + serverUrl + "/ws/feed/" + project
-								+ "/list/jobs");
+			String output = RapidDeployConnector.invokeRapidDeployDeploymentPollOutput(authenticationToken, serverUrl, project, environment, packageName,
+					false, true);
+			if (!asynchronousJob) {
+				boolean success = true;
+				final String jobId = RapidDeployConnector.extractJobId(output);
+				if (jobId != null) {
+					listener.getLogger().println("Checking job status every 30 seconds...");
+					boolean runningJob = true;
+					long milisToSleep = 30000L;
+					while (runningJob) {
+						Thread.sleep(milisToSleep);
+						final String jobDetails = RapidDeployConnector.pollRapidDeployJobDetails(authenticationToken, serverUrl, jobId);
+						final String jobStatus = RapidDeployConnector.extractJobStatus(jobDetails);
+						listener.getLogger().println("Job status: " + jobStatus);
+						if ((jobStatus.equals("DEPLOYING")) || (jobStatus.equals("QUEUED")) || (jobStatus.equals("STARTING"))
+								|| (jobStatus.equals("EXECUTING"))) {
+							listener.getLogger().println("Job running, next check in 30 seconds...");
+							milisToSleep = 30000L;
+						} else if ((jobStatus.equals("REQUESTED")) || (jobStatus.equals("REQUESTED_SCHEDULED"))) {
+							listener.getLogger().println(
+									"Job in a REQUESTED state. Approval may be required in RapidDeploy "
+											+ "to continue with the execution, next check in 30 seconds...");
+						} else if (jobStatus.equals("SCHEDULED")) {
+							listener.getLogger().println("Job in a SCHEDULED state, the execution will start in a future date, next check in 5 minutes...");
+							listener.getLogger().println("Printing out job details: ");
+							listener.getLogger().println(jobDetails);
+							milisToSleep = 300000L;
+						} else {
+							runningJob = false;
+							listener.getLogger().println("Job finished with status: " + jobStatus);
+							if ((jobStatus.equals("FAILED")) || (jobStatus.equals("REJECTED")) || (jobStatus.equals("CANCELLED"))
+									|| (jobStatus.equals("UNEXECUTABLE")) || (jobStatus.equals("TIMEDOUT")) || (jobStatus.equals("UNKNOWN"))) {
+								success = false;
+							}
+						}
+					}
+				} else {
+					throw new RuntimeException("Could not retrieve job id, running asynchronously!");
+				}
+				final String logs = RapidDeployConnector.pollRapidDeployJobLog(authenticationToken, serverUrl, jobId);
+				if (!success) {
+					throw new RuntimeException("RapidDeploy job failed. Please check the output." + System.getProperty("line.separator") + logs);
+				}
+				listener.getLogger().println("RapidDeploy job successfully run. Please check the output.");
+				listener.getLogger().println();
+				listener.getLogger().println(logs);
 			}
 			return true;
 		} catch (Exception e) {
@@ -190,7 +230,7 @@ public class RapidDeployJobRunner extends Builder {
 			if (!getProjects(serverUrl, authenticationToken).isEmpty()) {
 				List<String> environments;
 				try {
-					environments = RapidDeployConnector.invokeRapidDeployListEnvironments(authenticationToken, serverUrl, project);
+					environments = RapidDeployConnector.invokeRapidDeployListTargets(authenticationToken, serverUrl, project);
 					for (String environmentName : environments) {
 						if (!environmentName.contains("Project [") && !environmentName.contains("domainxml")) {
 							items.add(environmentName);
