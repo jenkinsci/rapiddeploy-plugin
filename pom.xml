@@ -3,20 +3,32 @@
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
-		<version>1.509.1</version><!-- which version of Jenkins is this plugin 
-			built against? -->
+		<version>1.509.1</version><!-- which version of Jenkins is this plugin built against? -->
 	</parent>
 
 	<artifactId>rapiddeploy-jenkins</artifactId>
 	<version>3.8-SNAPSHOT</version>
 	<packaging>hpi</packaging>
 
-	<!-- get every artifact through repo.jenkins-ci.org, which proxies all the 
-		artifacts that we need -->
+	<!-- This is necessary because https://maven.jenkins-ci.org does't work anymore,
+		so we need to overwrite the repositories as per Jenkins documentation.-->
+	<distributionManagement>
+		<repository>
+			<uniqueVersion>false</uniqueVersion>
+			<id>maven.jenkins-ci.org</id>
+			<url>https://repo.jenkins-ci.org/releases/</url>
+		</repository>
+		<snapshotRepository>
+			<id>maven.jenkins-ci.org</id>
+			<url>https://repo.jenkins-ci.org/snapshots/</url>
+		</snapshotRepository>
+	</distributionManagement>
+
+	<!-- get every artifact through repo.jenkins-ci.org, which proxies all the artifacts that we need -->
 	<repositories>
 		<repository>
 			<id>repo.jenkins-ci.org</id>
-			<url>http://repo.jenkins-ci.org/public/</url>
+			<url>https://repo.jenkins-ci.org/public/</url>
 		</repository>
 		<repository>
 			<id>MidVision</id>
@@ -27,7 +39,7 @@
 	<pluginRepositories>
 		<pluginRepository>
 			<id>repo.jenkins-ci.org</id>
-			<url>http://repo.jenkins-ci.org/public/</url>
+			<url>https://repo.jenkins-ci.org/public/</url>
 		</pluginRepository>
 	</pluginRepositories>
 
@@ -47,8 +59,7 @@
 	</dependencies>
 
 	<properties>
-		<!-- explicitly specifying the latest version here because one we get from 
-			the parent POM tends to lag behind a bit -->
+		<!-- explicitly specifying the latest version here because one we get from the parent POM tends to lag behind a bit -->
 		<maven-hpi-plugin.version>1.95</maven-hpi-plugin.version>
 		<maven-release-plugin.version>2.5</maven-release-plugin.version>
 	</properties>
