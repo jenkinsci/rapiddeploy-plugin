@@ -1,0 +1,38 @@
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define"
+	xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+
+	<j:set var="id" value="${h.generateId()}" />
+
+	<f:entry title="RapidDeploy server URL" field="serverUrl">
+		<f:textbox />
+	</f:entry>
+
+	<f:entry title="RapidDeploy authentication token" field="authenticationToken">
+		<f:password />
+	</f:entry>
+
+	<f:entry>
+		<div style="float:right">
+			<input type="button" value="Load job plans" class="yui-button validate-button"
+				onclick="validateButton('${descriptor.descriptorFullUrl}/loadJobPlans','serverUrl,authenticationToken',this); updateListBox('${id}','${descriptor.descriptorFullUrl}/fillJobPlanItems')" />
+		</div>
+		<div style="display:none;">
+			<img src="${imagesURL}/spinner.gif" />
+			Loading job plans...
+		</div>
+		<div></div>
+	</f:entry>
+
+	<f:entry title="Job Plan" field="jobPlan">
+		<f:select id="${id}" />
+	</f:entry>
+
+	<f:entry title="Asynchronous job" field="asynchronousJob">
+		<f:checkbox />
+	</f:entry>
+
+	<f:entry title="Show Full Logs" field="showFullLogs">
+		<f:checkbox />
+	</f:entry>
+
+</j:jelly>
