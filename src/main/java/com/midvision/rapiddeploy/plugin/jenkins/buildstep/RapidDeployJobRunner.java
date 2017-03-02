@@ -1,20 +1,11 @@
 package com.midvision.rapiddeploy.plugin.jenkins.buildstep;
 
-import hudson.Extension;
-import hudson.Launcher;
-import hudson.model.BuildListener;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.tasks.BuildStepDescriptor;
-import hudson.tasks.BuildStepMonitor;
-import hudson.tasks.Builder;
-import hudson.util.ComboBoxModel;
-import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
-
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Map.Entry;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -26,6 +17,18 @@ import org.kohsuke.stapler.DataBoundConstructor;
 import org.kohsuke.stapler.QueryParameter;
 
 import com.midvision.rapiddeploy.connector.RapidDeployConnector;
+
+import hudson.Extension;
+import hudson.Launcher;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.BuildListener;
+import hudson.tasks.BuildStepDescriptor;
+import hudson.tasks.BuildStepMonitor;
+import hudson.tasks.Builder;
+import hudson.util.ComboBoxModel;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
 
 public class RapidDeployJobRunner extends Builder {
 
@@ -72,16 +75,33 @@ public class RapidDeployJobRunner extends Builder {
                 auxPackageName = "LATEST";
             }
         }
+
+        Map<String, String> dataDictionary = new HashMap<String, String>();
+        try {
+			for (Entry<String, String> envVar : build.getEnvironment(listener).entrySet()) {
+				pattern = Pattern.compile("@@.+@@");
+		        matcher = pattern.matcher(envVar.getKey());
+		        if (matcher.matches()) {
+					dataDictionary.put(envVar.getKey(), envVar.getValue());
+				}
+			}
+		} catch (IOException e1) {
+			listener.getLogger().println("WARNING: Unable to retrieve the list of parameters. No data dictionary passed to the deployment.");
+		} catch (InterruptedException e1) {
+			listener.getLogger().println("WARNING: Unable to retrieve the list of parameters. No data dictionary passed to the deployment.");
+		}
+        
         listener.getLogger().println("Invoking RapidDeploy project deploy via path...");
         listener.getLogger().println("  > Server URL: " + serverUrl);
         listener.getLogger().println("  > Project: " + project);
         listener.getLogger().println("  > Environment: " + environment);
         listener.getLogger().println("  > Package: " + auxPackageName);
         listener.getLogger().println("  > Asynchronous? " + asynchronousJob);
+        listener.getLogger().println("  > Data dictionary: " + dataDictionary);
         listener.getLogger().println();
         try {
             String output = RapidDeployConnector.invokeRapidDeployDeploymentPollOutput(authenticationToken, serverUrl, project, environment, auxPackageName,
-                    false, true);
+                    false, true, dataDictionary);
             if (!asynchronousJob) {
                 boolean success = true;
                 final String jobId = RapidDeployConnector.extractJobId(output);
