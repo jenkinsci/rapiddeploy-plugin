@@ -1,22 +1,14 @@
 package com.midvision.rapiddeploy.plugin.jenkins.buildstep;
 
-import hudson.Extension;
-import hudson.Launcher;
-import hudson.model.BuildListener;
-import hudson.model.AbstractBuild;
-import hudson.model.AbstractProject;
-import hudson.tasks.BuildStepDescriptor;
-import hudson.tasks.BuildStepMonitor;
-import hudson.tasks.Builder;
-import hudson.util.FormValidation;
-import hudson.util.ListBoxModel;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.servlet.ServletException;
 
+import org.apache.commons.lang.StringUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.kohsuke.stapler.DataBoundConstructor;
@@ -24,13 +16,24 @@ import org.kohsuke.stapler.QueryParameter;
 
 import com.midvision.rapiddeploy.connector.RapidDeployConnector;
 
+import hudson.Extension;
+import hudson.Launcher;
+import hudson.model.AbstractBuild;
+import hudson.model.AbstractProject;
+import hudson.model.BuildListener;
+import hudson.tasks.BuildStepDescriptor;
+import hudson.tasks.BuildStepMonitor;
+import hudson.tasks.Builder;
+import hudson.util.FormValidation;
+import hudson.util.ListBoxModel;
+
 public class RapidDeployPackageBuilder extends Builder {
 
 	private final String serverUrl;
 	private final String authenticationToken;
 	private final String project;
 	private final boolean enableCustomPackageName;
-	private final String packageName;
+	private String packageName;
 	private final String archiveExtension;
 
 	private static final Log logger = LogFactory.getLog(RapidDeployPackageBuilder.class);
@@ -49,6 +52,10 @@ public class RapidDeployPackageBuilder extends Builder {
 
 	@Override
 	public boolean perform(AbstractBuild<?, ?> build, Launcher launcher, BuildListener listener) {
+		if (StringUtils.isNotBlank(packageName)) {
+			packageName = replaceParametersPlaceholders(packageName, build, listener);
+		}
+
 		listener.getLogger().println("Invoking RapidDeploy deployment package builder...");
 		listener.getLogger().println("  > Server URL: " + serverUrl);
 		listener.getLogger().println("  > Project: " + project);
@@ -105,6 +112,48 @@ public class RapidDeployPackageBuilder extends Builder {
 			listener.getLogger().println("Call failed with error: " + e.getMessage());
 			return false;
 		}
+	}
+
+	private String replaceParametersPlaceholders(String paramStr, AbstractBuild<?, ?> build, BuildListener listener) {
+		listener.getLogger().println("Replacing job parameters for '" + paramStr + "'");
+
+		// First we need to retrieve all the placeholders: '${xxx}'
+		Pattern pattern = Pattern.compile("\\$\\{[^\\$\\{\\}]+\\}");
+		// Then we need to extract the string inside the placeholder
+		Pattern inPattern = Pattern.compile("\\$\\{(.+)\\}");
+
+		String group;
+		String replaceStr;
+		Matcher matcher = pattern.matcher(paramStr);
+		Matcher inMatcher;
+
+		// We iterate over the placeholders found
+		while (matcher.find()) {
+			group = matcher.group();
+			listener.getLogger().println("Job parameter found: " + group);
+			inMatcher = inPattern.matcher(group);
+			// Obtain the string inside the placeholder
+			if (inMatcher.matches()) {
+				try {
+					// Get the value of the parameter
+					replaceStr = build.getEnvironment(listener).get(inMatcher.group(1));
+					listener.getLogger().println("Job parameter value retrieved: " + replaceStr);
+					// If the value is not blank, replace the parameter
+					if (StringUtils.isNotBlank(replaceStr)) {
+						listener.getLogger()
+								.println("Retrieved value '" + replaceStr + "' from job parameter '" + group + "'");
+						paramStr = paramStr.replace(group, replaceStr);
+					} else {
+						listener.getLogger().println("WARNING: job parameter not found '" + group + "'");
+					}
+				} catch (Exception e) {
+					listener.getLogger().println("WARNING: Unable to retrieve the job parameter '" + group + "'");
+					listener.getLogger().println("         " + e.getMessage());
+				}
+			}
+		}
+		listener.getLogger().println("Replaced value '" + paramStr + "'");
+		return paramStr;
 	}
 
 	public String getProject() {
