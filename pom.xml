@@ -7,7 +7,7 @@
 	</parent>
 
 	<artifactId>rapiddeploy-jenkins</artifactId>
-	<version>3.11-SNAPSHOT</version>
+	<version>3.11</version>
 	<packaging>hpi</packaging>
 
 	<!-- This is necessary because https://maven.jenkins-ci.org does't work anymore,
@@ -68,7 +68,7 @@
 		<connection>scm:git:ssh://github.com/jenkinsci/rapiddeploy-plugin.git</connection>
 		<developerConnection>scm:git:ssh://git@github.com/jenkinsci/rapiddeploy-plugin.git</developerConnection>
 		<url>https://github.com/jenkinsci/rapiddeploy-plugin</url>
-		<tag>HEAD</tag>
+		<tag>rapiddeploy-jenkins-3.11</tag>
 	</scm>
 
 	<url>https://wiki.jenkins-ci.org/display/JENKINS/RapidDeploy+plugin</url>
