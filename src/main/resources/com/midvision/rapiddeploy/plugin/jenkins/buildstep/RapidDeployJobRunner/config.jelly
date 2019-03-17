@@ -27,7 +27,7 @@
 		<f:select id="${id}" />
 	</f:entry>
 
-	<f:entry title="Environment" field="environment">
+	<f:entry title="Target" field="target">
 		<f:select />
 	</f:entry>
 
