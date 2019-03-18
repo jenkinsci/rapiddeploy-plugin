@@ -1,7 +1,7 @@
 RapidDeploy Plugin
 ====================
 
-The best way of using the _RapidDeploy_ functionality from a _Jenkins_ job or pipeline. This includes: 
+The best way of using the [RapidDeploy](https://www.midvision.com/rapiddeploy-overview) functionality from a _Jenkins_ job or pipeline. This includes: 
 
 * Creating a deployment package on _RapidDeploy_.
 * Deploying a project on _RapidDeploy_.
