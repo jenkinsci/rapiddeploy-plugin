@@ -7,43 +7,34 @@
 		<version>2.3</version>
 	</parent>
 
+	<name>RapidDeploy Plugin</name>
+	<description>Allows Jenkins users to use the RapidDeploy functionality on a Jenkins job or pipeline.</description>
 	<artifactId>rapiddeploy-jenkins</artifactId>
 	<version>3.12-SNAPSHOT</version>
 	<packaging>hpi</packaging>
 
-	<!-- This is necessary because https://maven.jenkins-ci.org does't work 
-		anymore, so we need to overwrite the repositories as per Jenkins documentation. -->
-	<distributionManagement>
-		<repository>
-			<uniqueVersion>false</uniqueVersion>
-			<id>maven.jenkins-ci.org</id>
-			<url>https://repo.jenkins-ci.org/releases/</url>
-		</repository>
-		<snapshotRepository>
-			<id>maven.jenkins-ci.org</id>
-			<url>https://repo.jenkins-ci.org/snapshots/</url>
-		</snapshotRepository>
-	</distributionManagement>
+	<url>https://wiki.jenkins-ci.org/display/JENKINS/RapidDeploy+Plugin</url>
 
-	<!-- get every artifact through repo.jenkins-ci.org, which proxies all the 
-		artifacts that we need -->
-	<repositories>
-		<repository>
-			<id>repo.jenkins-ci.org</id>
-			<url>https://repo.jenkins-ci.org/public/</url>
-		</repository>
-		<repository>
+	<developers>
+		<developer>
 			<id>MidVision</id>
-			<url>http://www.download.midvision.com/content/repositories/Community_release/</url>
-		</repository>
-	</repositories>
+			<name>MidVision</name>
+			<email>support@midvision.com</email>
+		</developer>
+	</developers>
 
-	<pluginRepositories>
-		<pluginRepository>
-			<id>repo.jenkins-ci.org</id>
-			<url>https://repo.jenkins-ci.org/public/</url>
-		</pluginRepository>
-	</pluginRepositories>
+	<scm>
+		<connection>scm:git:ssh://github.com/jenkinsci/rapiddeploy-plugin.git</connection>
+		<developerConnection>scm:git:ssh://git@github.com/jenkinsci/rapiddeploy-plugin.git</developerConnection>
+		<url>https://github.com/jenkinsci/rapiddeploy-plugin</url>
+		<tag>HEAD</tag>
+	</scm>
+
+	<properties>
+		<workflow.version>1.13</workflow.version>
+		<!-- <jenkins.version>2.60.3</jenkins.version> -->
+		<!-- <java.level>8</java.level> -->
+	</properties>
 
 	<dependencies>
 		<dependency>
@@ -58,25 +49,12 @@
 			<type>jar</type>
 			<scope>compile</scope>
 		</dependency>
-	<dependency>
-		<groupId>org.jenkins-ci.plugins.workflow</groupId>
-		<artifactId>workflow-cps</artifactId>
-		<version>${workflow.version}</version>
-	</dependency>
+		<dependency>
+			<groupId>org.jenkins-ci.plugins.workflow</groupId>
+			<artifactId>workflow-cps</artifactId>
+			<version>${workflow.version}</version>
+		</dependency>
 	</dependencies>
-
-	<properties>
-		<workflow.version>1.13</workflow.version>
-	</properties>
-
-	<scm>
-		<connection>scm:git:ssh://github.com/jenkinsci/rapiddeploy-plugin.git</connection>
-		<developerConnection>scm:git:ssh://git@github.com/jenkinsci/rapiddeploy-plugin.git</developerConnection>
-		<url>https://github.com/jenkinsci/rapiddeploy-plugin</url>
-		<tag>HEAD</tag>
-	</scm>
-
-	<url>https://wiki.jenkins-ci.org/display/JENKINS/RapidDeploy+plugin</url>
 
 	<build>
 		<plugins>
@@ -96,11 +74,36 @@
 		</plugins>
 	</build>
 
-	<developers>
-		<developer>
+	<!-- This is necessary because https://maven.jenkins-ci.org does't work 
+		anymore, so we need to overwrite the repositories as per Jenkins documentation. -->
+	<distributionManagement>
+		<repository>
+			<uniqueVersion>false</uniqueVersion>
+			<id>maven.jenkins-ci.org</id>
+			<url>https://repo.jenkins-ci.org/releases/</url>
+		</repository>
+		<snapshotRepository>
+			<id>maven.jenkins-ci.org</id>
+			<url>https://repo.jenkins-ci.org/snapshots/</url>
+		</snapshotRepository>
+	</distributionManagement>
+
+	<!-- Get every artifact through repo.jenkins-ci.org, which proxies all the 
+		artifacts that we need. -->
+	<repositories>
+		<repository>
+			<id>repo.jenkins-ci.org</id>
+			<url>https://repo.jenkins-ci.org/public/</url>
+		</repository>
+		<repository>
 			<id>MidVision</id>
-			<name>MidVision</name>
-			<email>support@midvision.com</email>
-		</developer>
-	</developers>
+			<url>http://www.download.midvision.com/content/repositories/Community_release/</url>
+		</repository>
+	</repositories>
+	<pluginRepositories>
+		<pluginRepository>
+			<id>repo.jenkins-ci.org</id>
+			<url>https://repo.jenkins-ci.org/public/</url>
+		</pluginRepository>
+	</pluginRepositories>
 </project>
