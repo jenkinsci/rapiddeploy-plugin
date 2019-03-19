@@ -1,3 +1,4 @@
+<?jelly escape-by-default='true'?>
 <div>
   Allows Jenkins users to use the RapidDeploy functionality on a Jenkins job or pipeline.
 </div>
