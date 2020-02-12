@@ -2,10 +2,12 @@ package com.midvision.rapiddeploy.plugin.jenkins;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -62,6 +64,7 @@ public class RapidDeployConnectorProxy {
 					false, true);
 			boolean success = true;
 			final String jobId = RapidDeployConnector.extractJobId(output);
+			listener.getLogger().println(">>>  Requested package creation [" + jobId + "] <<<");
 			if (jobId != null) {
 				listener.getLogger().println("Checking job status every 30 seconds...");
 				boolean runningJob = true;
@@ -148,6 +151,7 @@ public class RapidDeployConnectorProxy {
 			if (!asynchronousJob) {
 				boolean success = true;
 				final String jobId = RapidDeployConnector.extractJobId(output);
+				listener.getLogger().println(">>>  Requested project deployment [" + jobId + "] <<<");
 				if (jobId != null) {
 					listener.getLogger().println("Checking job status every 30 seconds...");
 					boolean runningJob = true;
@@ -215,6 +219,7 @@ public class RapidDeployConnectorProxy {
 				String jobDetails = "";
 				boolean success = true;
 				final String jobId = RapidDeployConnector.extractJobId(output);
+				listener.getLogger().println(">>>  Requested job plan deployment [" + jobId + "] <<<");
 				if (jobId != null) {
 					listener.getLogger().println("Checking job status every 30 seconds...");
 					boolean runningJob = true;
@@ -374,7 +379,11 @@ public class RapidDeployConnectorProxy {
 					logger.debug("REQUEST TO WEB SERVICE GET JOB PLANS...");
 					final String jobPlansCallOutput = RapidDeployConnector.invokeRapidDeployJobPlans(authenticationToken, serverUrl);
 					final Map<String, String> jobPlansExtracted = RapidDeployConnector.extractJobPlansFromXml(jobPlansCallOutput);
-					for (final String jobPlanDesc : jobPlansExtracted.values()) {
+					final Map<Integer, String> integerKeyMap = new TreeMap<Integer, String>(Collections.reverseOrder());
+					for (final Map.Entry<String, String> entry : jobPlansExtracted.entrySet()) {
+						integerKeyMap.put(Integer.valueOf(entry.getKey()), entry.getValue());
+					}
+					for (final String jobPlanDesc : integerKeyMap.values()) {
 						jobPlans.add(jobPlanDesc);
 					}
 					newConnection = false;
