@@ -23,6 +23,12 @@ public class RapidDeployConnectorProxy {
 
 	private static final Log logger = LogFactory.getLog(RapidDeployPackageBuilder.class);
 
+	public static final String NOT_EMPTY_MESSAGE = "Please set a value for this field!";
+	public static final String NO_PROTOCOL_MESSAGE = "Please specify a protocol for the URL, e.g. \"http://\".";
+	public static final String CONNECTION_BAD_MESSAGE = "Unable to establish connection.";
+	public static final String WRONG_PROJECT_MESSAGE = "Wrong project selected, please reload the projects list.";
+	public static final String INSUFFICIENT_PERMISSIONS_MESSAGE = "Insufficient permissions to perform the check.";
+
 	private List<String> projects;
 	private List<String> jobPlans;
 	private boolean newConnection = true;
@@ -35,9 +41,9 @@ public class RapidDeployConnectorProxy {
 		this.newConnection = newConnection;
 	}
 
-	/*****************************/
-	/** PACKAGE CREATION METHOS **/
-	/*****************************/
+	/******************************/
+	/** PACKAGE CREATION METHODS **/
+	/******************************/
 
 	public static boolean performPackageBuild(final AbstractBuild<?, ?> build, final BuildListener listener, final String serverUrl,
 			final String authenticationToken, final String project, String packageName, final String archiveExtension) {
@@ -102,9 +108,9 @@ public class RapidDeployConnectorProxy {
 		}
 	}
 
-	/***************************/
-	/** JOB DEPLOYMENT METHOS **/
-	/***************************/
+	/****************************/
+	/** JOB DEPLOYMENT METHODS **/
+	/****************************/
 
 	public static boolean performJobDeployment(final AbstractBuild<?, ?> build, final BuildListener listener, final String serverUrl,
 			final String authenticationToken, final String project, final String target, String packageName, final Boolean asynchronousJob) {
@@ -190,9 +196,9 @@ public class RapidDeployConnectorProxy {
 		}
 	}
 
-	/*************************/
-	/** JOB PLAN RUN METHOS **/
-	/*************************/
+	/**************************/
+	/** JOB PLAN RUN METHODS **/
+	/**************************/
 
 	public static boolean performJobPlanRun(final BuildListener listener, final String serverUrl, final String authenticationToken, final String jobPlan,
 			final Boolean asynchronousJob, final Boolean showFullLogs) {
@@ -267,9 +273,9 @@ public class RapidDeployConnectorProxy {
 		}
 	}
 
-	/**********************/
-	/***** AUX METHOS *****/
-	/**********************/
+	/***********************/
+	/***** AUX METHODS *****/
+	/***********************/
 
 	private static String replaceParametersPlaceholders(String paramStr, final AbstractBuild<?, ?> build, final BuildListener listener) {
 		listener.getLogger().println("Replacing job parameters for '" + paramStr + "'");
@@ -312,9 +318,9 @@ public class RapidDeployConnectorProxy {
 		return paramStr;
 	}
 
-	/************************/
-	/***** PROXY METHOS *****/
-	/************************/
+	/*************************/
+	/***** PROXY METHODS *****/
+	/*************************/
 
 	/** Method that caches the projects to ease the form validation **/
 	public List<String> getProjects(final String serverUrl, final String authenticationToken) {
