@@ -3,11 +3,13 @@ package com.midvision.rapiddeploy.plugin.jenkins;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
-import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -323,6 +325,28 @@ public class RapidDeployConnectorProxy {
 		return paramStr;
 	}
 
+	private Map<String, String> sortByJobPlanName(Map<String, String> unsortMap) {
+
+		// 1. Convert Map to List of Map
+		List<Entry<String, String>> list = new LinkedList<Map.Entry<String, String>>(unsortMap.entrySet());
+
+		// 2. Sort list with Collections.sort(), provide a custom Comparator
+		// Try switch the o1 o2 position for a different order
+		Collections.sort(list, new Comparator<Map.Entry<String, String>>() {
+			public int compare(Map.Entry<String, String> o1, Map.Entry<String, String> o2) {
+				return (o1.getValue().substring(o1.getValue().indexOf("]") + 2)).compareTo(o2.getValue().substring(o2.getValue().indexOf("]") + 2));
+			}
+		});
+
+		// 3. Loop the sorted list and put it into a new insertion order Map LinkedHashMap
+		Map<String, String> sortedMap = new LinkedHashMap<String, String>();
+		for (Map.Entry<String, String> entry : list) {
+			sortedMap.put(entry.getKey(), entry.getValue());
+		}
+
+		return sortedMap;
+	}
+
 	/*************************/
 	/***** PROXY METHODS *****/
 	/*************************/
@@ -378,12 +402,9 @@ public class RapidDeployConnectorProxy {
 				if (serverUrl != null && !"".equals(serverUrl) && authenticationToken != null && !"".equals(authenticationToken)) {
 					logger.debug("REQUEST TO WEB SERVICE GET JOB PLANS...");
 					final String jobPlansCallOutput = RapidDeployConnector.invokeRapidDeployJobPlans(authenticationToken, serverUrl);
-					final Map<String, String> jobPlansExtracted = RapidDeployConnector.extractJobPlansFromXml(jobPlansCallOutput);
-					final Map<Integer, String> integerKeyMap = new TreeMap<Integer, String>(Collections.reverseOrder());
-					for (final Map.Entry<String, String> entry : jobPlansExtracted.entrySet()) {
-						integerKeyMap.put(Integer.valueOf(entry.getKey()), entry.getValue());
-					}
-					for (final String jobPlanDesc : integerKeyMap.values()) {
+					Map<String, String> jobPlansExtracted = RapidDeployConnector.extractJobPlansFromXml(jobPlansCallOutput);
+					jobPlansExtracted = sortByJobPlanName(jobPlansExtracted);
+					for (final String jobPlanDesc : jobPlansExtracted.values()) {
 						jobPlans.add(jobPlanDesc);
 					}
 					newConnection = false;
