@@ -20,6 +20,7 @@ import org.apache.commons.logging.LogFactory;
 import com.midvision.rapiddeploy.connector.RapidDeployConnector;
 import com.midvision.rapiddeploy.plugin.jenkins.postbuildstep.RapidDeployPackageBuilder;
 
+import hudson.Util;
 import hudson.model.AbstractBuild;
 import hudson.model.BuildListener;
 
@@ -436,7 +437,7 @@ public class RapidDeployConnectorProxy {
 			for (final String packageName : packageNames) {
 				if (!"null".equals(packageName) && !packageName.startsWith("Deployment")) {
 					sb.append("<tr><td class=\"setting-main\">");
-					sb.append(packageName);
+					sb.append(Util.escape(packageName));
 					sb.append("</td></tr>");
 					index++;
 					if (index >= limit) {
