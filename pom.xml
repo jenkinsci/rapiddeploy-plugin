@@ -1,9 +1,10 @@
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.jenkins-ci.plugins</groupId>
 		<artifactId>plugin</artifactId>
-		<version>2.3</version>
+		<version>3.57</version>
 	</parent>
 
 	<name>RapidDeploy Plugin</name>
@@ -31,8 +32,8 @@
 
 	<properties>
 		<workflow.version>1.13</workflow.version>
-<!-- 		<jenkins.version>2.0</jenkins.version> -->
 		<jenkins-test-harness.version>2.48</jenkins-test-harness.version>
+		<java.level>8</java.level>
 	</properties>
 
 	<dependencies>
@@ -47,6 +48,20 @@
 			<version>${workflow.version}</version>
 		</dependency>
 	</dependencies>
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>org.jenkins-ci.ui</groupId>
+				<artifactId>jquery-detached</artifactId>
+				<version>1.2.1</version>
+			</dependency>
+			<dependency>
+				<groupId>org.jenkins-ci</groupId>
+				<artifactId>version-number</artifactId>
+				<version>1.6</version>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<build>
 		<plugins>
