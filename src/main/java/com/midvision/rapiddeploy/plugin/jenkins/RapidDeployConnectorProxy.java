@@ -28,6 +28,26 @@ public class RapidDeployConnectorProxy {
 
 	private static final Log logger = LogFactory.getLog(RapidDeployPackageBuilder.class);
 
+	/** RapidDeploy deployment statuses **/
+	// public static final String UNKNOWN = "UNKNOWN";
+	// public static final String REJECTED = "REJECTED";
+	public static final String SUBMITTED = "SUBMITTED";
+	public static final String STARTING = "STARTING";
+	public static final String EXECUTING = "EXECUTING";
+	public static final String COMPLETED = "COMPLETED";
+	// public static final String CANCELLED = "CANCELLED";
+	// public static final String FAILED = "FAILED";
+	// public static final String UNEXECUTABLE = "UNEXECUTABLE";
+	// public static final String TIMED_OUT = "TIMED_OUT";
+	public static final String REQUESTED = "REQUESTED";
+	public static final String SCHEDULED = "SCHEDULED";
+	// public static final String BATCHED = "BATCHED";
+	// public static final String JOB_HALTED = "JOB_HALTED";
+	// public static final String TASK_HALTED = "TASK_HALTED";
+	public static final String REQUESTED_SCHEDULED = "REQUESTED_SCHEDULED";
+	// public static final String RESUMING = "RESUMING";
+
+	/** Messages **/
 	public static final String NOT_EMPTY_MESSAGE = "Please set a value for this field!";
 	public static final String NO_PROTOCOL_MESSAGE = "Please specify a protocol for the URL, e.g. \"http://\".";
 	public static final String CONNECTION_BAD_MESSAGE = "Unable to establish connection.";
@@ -63,51 +83,9 @@ public class RapidDeployConnectorProxy {
 		listener.getLogger().println("  > Archive extension: " + archiveExtension);
 		listener.getLogger().println();
 		try {
-			final String output = RapidDeployConnector.invokeRapidDeployBuildPackage(authenticationToken, serverUrl, project, packageName, archiveExtension,
-					false, true);
-			boolean success = true;
-			final String jobId = RapidDeployConnector.extractJobId(output);
-			listener.getLogger().println(">>>  Requested package creation [" + jobId + "] <<<");
-			if (jobId != null) {
-				listener.getLogger().println("Checking job status every 30 seconds...");
-				boolean runningJob = true;
-				long milisToSleep = 30000L;
-				while (runningJob) {
-					Thread.sleep(milisToSleep);
-					final String jobDetails = RapidDeployConnector.pollRapidDeployJobDetails(authenticationToken, serverUrl, jobId);
-					final String jobStatus = RapidDeployConnector.extractJobStatus(jobDetails);
-					listener.getLogger().println("Job status: " + jobStatus);
-					if ((jobStatus.equals("DEPLOYING")) || (jobStatus.equals("QUEUED")) || (jobStatus.equals("STARTING")) || (jobStatus.equals("EXECUTING"))) {
-						listener.getLogger().println("Job running, next check in 30 seconds...");
-						milisToSleep = 30000L;
-					} else if ((jobStatus.equals("REQUESTED")) || (jobStatus.equals("REQUESTED_SCHEDULED"))) {
-						listener.getLogger().println("Job in a REQUESTED state. Approval may be required in RapidDeploy "
-								+ "to continue with the execution, next check in 30 seconds...");
-					} else if (jobStatus.equals("SCHEDULED")) {
-						listener.getLogger().println("Job in a SCHEDULED state, the execution will start in a future date, next check in 5 minutes...");
-						listener.getLogger().println("Printing out job details: ");
-						listener.getLogger().println(jobDetails);
-						milisToSleep = 300000L;
-					} else {
-						runningJob = false;
-						listener.getLogger().println("Job finished with status: " + jobStatus);
-						if ((jobStatus.equals("FAILED")) || (jobStatus.equals("REJECTED")) || (jobStatus.equals("CANCELLED"))
-								|| (jobStatus.equals("UNEXECUTABLE")) || (jobStatus.equals("TIMEDOUT")) || (jobStatus.equals("UNKNOWN"))) {
-							success = false;
-						}
-					}
-				}
-			} else {
-				throw new RuntimeException("Could not retrieve job id, running asynchronously!");
-			}
-			final String logs = RapidDeployConnector.pollRapidDeployJobLog(authenticationToken, serverUrl, jobId);
-			if (!success) {
-				throw new RuntimeException("RapidDeploy job failed. Please check the output." + System.getProperty("line.separator") + logs);
-			}
-			listener.getLogger().println("RapidDeploy job successfully run. Please check the output.");
-			listener.getLogger().println();
-			listener.getLogger().println(logs);
-			return true;
+			final String jobRequestOutput = RapidDeployConnector.invokeRapidDeployBuildPackage(authenticationToken, serverUrl, project, packageName,
+					archiveExtension, false, true);
+			return checkJobStatus(listener, serverUrl, authenticationToken, jobRequestOutput, false);
 		} catch (final Exception e) {
 			listener.getLogger().println("Call failed with error: " + e.getMessage());
 			return false;
@@ -149,52 +127,10 @@ public class RapidDeployConnectorProxy {
 		listener.getLogger().println("  > Data dictionary: " + dataDictionary);
 		listener.getLogger().println();
 		try {
-			final String output = RapidDeployConnector.invokeRapidDeployDeploymentPollOutput(authenticationToken, serverUrl, project, target, packageName,
-					false, true, dataDictionary);
+			final String jobRequestOutput = RapidDeployConnector.invokeRapidDeployDeploymentPollOutput(authenticationToken, serverUrl, project, target,
+					packageName, false, true, dataDictionary);
 			if (!asynchronousJob) {
-				boolean success = true;
-				final String jobId = RapidDeployConnector.extractJobId(output);
-				listener.getLogger().println(">>>  Requested project deployment [" + jobId + "] <<<");
-				if (jobId != null) {
-					listener.getLogger().println("Checking job status every 30 seconds...");
-					boolean runningJob = true;
-					long milisToSleep = 30000L;
-					while (runningJob) {
-						Thread.sleep(milisToSleep);
-						final String jobDetails = RapidDeployConnector.pollRapidDeployJobDetails(authenticationToken, serverUrl, jobId);
-						final String jobStatus = RapidDeployConnector.extractJobStatus(jobDetails);
-						listener.getLogger().println("Job status: " + jobStatus);
-						if ((jobStatus.equals("DEPLOYING")) || (jobStatus.equals("QUEUED")) || (jobStatus.equals("STARTING"))
-								|| (jobStatus.equals("EXECUTING"))) {
-							listener.getLogger().println("Job running, next check in 30 seconds...");
-							milisToSleep = 30000L;
-						} else if ((jobStatus.equals("REQUESTED")) || (jobStatus.equals("REQUESTED_SCHEDULED"))) {
-							listener.getLogger().println("Job in a REQUESTED state. Approval may be required in RapidDeploy "
-									+ "to continue with the execution, next check in 30 seconds...");
-						} else if (jobStatus.equals("SCHEDULED")) {
-							listener.getLogger().println("Job in a SCHEDULED state, the execution will start in a future date, next check in 5 minutes...");
-							listener.getLogger().println("Printing out job details: ");
-							listener.getLogger().println(jobDetails);
-							milisToSleep = 300000L;
-						} else {
-							runningJob = false;
-							listener.getLogger().println("Job finished with status: " + jobStatus);
-							if ((jobStatus.equals("FAILED")) || (jobStatus.equals("REJECTED")) || (jobStatus.equals("CANCELLED"))
-									|| (jobStatus.equals("UNEXECUTABLE")) || (jobStatus.equals("TIMEDOUT")) || (jobStatus.equals("UNKNOWN"))) {
-								success = false;
-							}
-						}
-					}
-				} else {
-					throw new RuntimeException("Could not retrieve job id, running asynchronously!");
-				}
-				final String logs = RapidDeployConnector.pollRapidDeployJobLog(authenticationToken, serverUrl, jobId);
-				if (!success) {
-					throw new RuntimeException("RapidDeploy job failed. Please check the output." + System.getProperty("line.separator") + logs);
-				}
-				listener.getLogger().println("RapidDeploy job successfully run. Please check the output.");
-				listener.getLogger().println();
-				listener.getLogger().println(logs);
+				return checkJobStatus(listener, serverUrl, authenticationToken, jobRequestOutput, false);
 			}
 			return true;
 		} catch (final Exception e) {
@@ -209,7 +145,7 @@ public class RapidDeployConnectorProxy {
 
 	public static boolean performJobPlanRun(final BuildListener listener, final String serverUrl, final String authenticationToken, final String jobPlan,
 			final Boolean asynchronousJob, final Boolean showFullLogs) {
-		listener.getLogger().println("Invoking RapidDeploy project deploy via path...");
+		listener.getLogger().println("Invoking RapidDeploy job plan execution via path...");
 		listener.getLogger().println("  > Server URL: " + serverUrl);
 		listener.getLogger().println("  > jobPlan: " + jobPlan);
 		listener.getLogger().println("  > Asynchronous? " + asynchronousJob);
@@ -217,62 +153,9 @@ public class RapidDeployConnectorProxy {
 		listener.getLogger().println();
 		final String jobPlanId = jobPlan.substring(jobPlan.indexOf("[") + 1, jobPlan.indexOf("]"));
 		try {
-			final String output = RapidDeployConnector.invokeRapidDeployJobPlanPollOutput(authenticationToken, serverUrl, jobPlanId, true);
+			final String jobRequestOutput = RapidDeployConnector.invokeRapidDeployJobPlanPollOutput(authenticationToken, serverUrl, jobPlanId, true);
 			if (!asynchronousJob) {
-				String jobDetails = "";
-				boolean success = true;
-				final String jobId = RapidDeployConnector.extractJobId(output);
-				listener.getLogger().println(">>>  Requested job plan deployment [" + jobId + "] <<<");
-				if (jobId != null) {
-					listener.getLogger().println("Checking job status every 30 seconds...");
-					boolean runningJob = true;
-					long milisToSleep = 30000L;
-					while (runningJob) {
-						Thread.sleep(milisToSleep);
-						jobDetails = RapidDeployConnector.pollRapidDeployJobDetails(authenticationToken, serverUrl, jobId);
-						final String jobStatus = RapidDeployConnector.extractJobStatus(jobDetails);
-						listener.getLogger().println("Job status: " + jobStatus);
-						if ((jobStatus.equals("DEPLOYING")) || (jobStatus.equals("QUEUED")) || (jobStatus.equals("STARTING"))
-								|| (jobStatus.equals("EXECUTING"))) {
-							listener.getLogger().println("Job running, next check in 30 seconds...");
-							milisToSleep = 30000L;
-						} else if ((jobStatus.equals("REQUESTED")) || (jobStatus.equals("REQUESTED_SCHEDULED"))) {
-							listener.getLogger().println("Job in a REQUESTED state. Approval may be required in RapidDeploy "
-									+ "to continue with the execution, next check in 30 seconds...");
-						} else if (jobStatus.equals("SCHEDULED")) {
-							listener.getLogger().println("Job in a SCHEDULED state, the execution will start in a future date, next check in 5 minutes...");
-							listener.getLogger().println("Printing out job details: ");
-							listener.getLogger().println(jobDetails);
-							milisToSleep = 300000L;
-						} else {
-							runningJob = false;
-							listener.getLogger().println("Job finished with status: " + jobStatus);
-							if ((jobStatus.equals("FAILED")) || (jobStatus.equals("REJECTED")) || (jobStatus.equals("CANCELLED"))
-									|| (jobStatus.equals("UNEXECUTABLE")) || (jobStatus.equals("TIMEDOUT")) || (jobStatus.equals("UNKNOWN"))) {
-								success = false;
-							}
-						}
-					}
-				} else {
-					throw new RuntimeException("Could not retrieve job id, running asynchronously!");
-				}
-				final String logs = RapidDeployConnector.pollRapidDeployJobLog(authenticationToken, serverUrl, jobId);
-				final StringBuilder fullLogs = new StringBuilder();
-				fullLogs.append(logs).append("\n");
-
-				if (showFullLogs) {
-					final List<String> includedJobIds = RapidDeployConnector.extractIncludedJobIdsUnderPipelineJob(jobDetails);
-					for (final String internalJobId : includedJobIds) {
-						fullLogs.append("LOGS RELATED TO JOB ID: ").append(internalJobId).append("\n");
-						fullLogs.append(RapidDeployConnector.pollRapidDeployJobLog(authenticationToken, serverUrl, internalJobId));
-					}
-				}
-				if (!success) {
-					throw new RuntimeException("RapidDeploy job failed. Please check the output." + System.getProperty("line.separator") + logs);
-				}
-				listener.getLogger().println("RapidDeploy job successfully run. Please check the output.");
-				listener.getLogger().println();
-				listener.getLogger().println(fullLogs.toString());
+				return checkJobStatus(listener, serverUrl, authenticationToken, jobRequestOutput, showFullLogs);
 			}
 			return true;
 		} catch (final Exception e) {
@@ -284,6 +167,65 @@ public class RapidDeployConnectorProxy {
 	/***********************/
 	/***** AUX METHODS *****/
 	/***********************/
+
+	private static boolean checkJobStatus(final BuildListener listener, final String serverUrl, final String authenticationToken, final String jobRequestOutput,
+			final boolean showFullLogs) throws Exception {
+		boolean success = false;
+		final String jobId = RapidDeployConnector.extractJobId(jobRequestOutput);
+		listener.getLogger().println(">>>  RapidDeploy job requested [" + jobId + "] <<<");
+		if (jobId != null) {
+			listener.getLogger().println("Checking job status every 30 seconds...");
+			String jobDetails = "";
+			boolean runningJob = true;
+			long milisToSleep = 30000L;
+			while (runningJob) {
+				Thread.sleep(milisToSleep);
+				jobDetails = RapidDeployConnector.pollRapidDeployJobDetails(authenticationToken, serverUrl, jobId);
+				final String jobStatus = RapidDeployConnector.extractJobStatus(jobDetails);
+				listener.getLogger().println("Job status: " + jobStatus);
+				if ((jobStatus.equals(SUBMITTED)) || (jobStatus.equals(STARTING)) || (jobStatus.equals(EXECUTING))) {
+					listener.getLogger().println("Job running, next check in 30 seconds...");
+					milisToSleep = 30000L;
+				} else if ((jobStatus.equals(REQUESTED)) || (jobStatus.equals(REQUESTED_SCHEDULED))) {
+					listener.getLogger().println("Job in a REQUESTED state. Approval may be required in RapidDeploy "
+							+ "to continue with the execution, next check in 30 seconds...");
+				} else if (jobStatus.equals(SCHEDULED)) {
+					listener.getLogger().println("Job in a SCHEDULED state, the execution will start in a future date, next check in 5 minutes...");
+					listener.getLogger().println("Printing out job details: ");
+					listener.getLogger().println(jobDetails);
+					milisToSleep = 300000L;
+				} else {
+					runningJob = false;
+					listener.getLogger().println("Job finished with status: " + jobStatus);
+					if (jobStatus.equals(COMPLETED)) {
+						success = true;
+					}
+				}
+			}
+			final String logs = RapidDeployConnector.pollRapidDeployJobLog(authenticationToken, serverUrl, jobId);
+			final StringBuilder fullLogs = new StringBuilder();
+			fullLogs.append(logs);
+
+			if (showFullLogs && StringUtils.isNotBlank(jobDetails)) {
+				fullLogs.append("\n");
+				final List<String> includedJobIds = RapidDeployConnector.extractIncludedJobIdsUnderPipelineJob(jobDetails);
+				for (final String internalJobId : includedJobIds) {
+					fullLogs.append("LOGS RELATED TO JOB ID: ").append(internalJobId).append("\n");
+					fullLogs.append(RapidDeployConnector.pollRapidDeployJobLog(authenticationToken, serverUrl, internalJobId));
+				}
+			}
+
+			if (!success) {
+				throw new RuntimeException("RapidDeploy job failed. Please check the output." + System.getProperty("line.separator") + fullLogs.toString());
+			}
+			listener.getLogger().println("RapidDeploy job successfully run. Please check the output.");
+			listener.getLogger().println();
+			listener.getLogger().println(fullLogs.toString());
+		} else {
+			throw new RuntimeException("Could not retrieve job ID, possibly running asynchronously!");
+		}
+		return success;
+	}
 
 	private static String replaceParametersPlaceholders(String paramStr, final AbstractBuild<?, ?> build, final BuildListener listener) {
 		listener.getLogger().println("Replacing job parameters for '" + paramStr + "'");
@@ -326,22 +268,22 @@ public class RapidDeployConnectorProxy {
 		return paramStr;
 	}
 
-	private Map<String, String> sortByJobPlanName(Map<String, String> unsortMap) {
+	private Map<String, String> sortByJobPlanName(final Map<String, String> unsortMap) {
 
 		// 1. Convert Map to List of Map
-		List<Entry<String, String>> list = new LinkedList<Map.Entry<String, String>>(unsortMap.entrySet());
+		final List<Entry<String, String>> list = new LinkedList<Map.Entry<String, String>>(unsortMap.entrySet());
 
 		// 2. Sort list with Collections.sort(), provide a custom Comparator
 		// Try switch the o1 o2 position for a different order
 		Collections.sort(list, new Comparator<Map.Entry<String, String>>() {
-			public int compare(Map.Entry<String, String> o1, Map.Entry<String, String> o2) {
+			public int compare(final Map.Entry<String, String> o1, final Map.Entry<String, String> o2) {
 				return (o1.getValue().substring(o1.getValue().indexOf("]") + 2)).compareTo(o2.getValue().substring(o2.getValue().indexOf("]") + 2));
 			}
 		});
 
 		// 3. Loop the sorted list and put it into a new insertion order Map LinkedHashMap
-		Map<String, String> sortedMap = new LinkedHashMap<String, String>();
-		for (Map.Entry<String, String> entry : list) {
+		final Map<String, String> sortedMap = new LinkedHashMap<String, String>();
+		for (final Map.Entry<String, String> entry : list) {
 			sortedMap.put(entry.getKey(), entry.getValue());
 		}
 
