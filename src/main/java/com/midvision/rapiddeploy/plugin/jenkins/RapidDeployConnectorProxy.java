@@ -29,23 +29,23 @@ public class RapidDeployConnectorProxy {
 	private static final Log logger = LogFactory.getLog(RapidDeployPackageBuilder.class);
 
 	/** RapidDeploy deployment statuses **/
-	// public static final String UNKNOWN = "UNKNOWN";
-	// public static final String REJECTED = "REJECTED";
+	public static final String UNKNOWN = "UNKNOWN";
+	public static final String REJECTED = "REJECTED";
 	public static final String SUBMITTED = "SUBMITTED";
 	public static final String STARTING = "STARTING";
 	public static final String EXECUTING = "EXECUTING";
 	public static final String COMPLETED = "COMPLETED";
-	// public static final String CANCELLED = "CANCELLED";
-	// public static final String FAILED = "FAILED";
-	// public static final String UNEXECUTABLE = "UNEXECUTABLE";
-	// public static final String TIMED_OUT = "TIMED_OUT";
+	public static final String CANCELLED = "CANCELLED";
+	public static final String FAILED = "FAILED";
+	public static final String UNEXECUTABLE = "UNEXECUTABLE";
+	public static final String TIMED_OUT = "TIMED_OUT";
 	public static final String REQUESTED = "REQUESTED";
 	public static final String SCHEDULED = "SCHEDULED";
-	// public static final String BATCHED = "BATCHED";
-	// public static final String JOB_HALTED = "JOB_HALTED";
-	// public static final String TASK_HALTED = "TASK_HALTED";
+	public static final String BATCHED = "BATCHED";
+	public static final String JOB_HALTED = "JOB_HALTED";
+	public static final String TASK_HALTED = "TASK_HALTED";
 	public static final String REQUESTED_SCHEDULED = "REQUESTED_SCHEDULED";
-	// public static final String RESUMING = "RESUMING";
+	public static final String RESUMING = "RESUMING";
 
 	/** Messages **/
 	public static final String NOT_EMPTY_MESSAGE = "Please set a value for this field!";
@@ -85,7 +85,7 @@ public class RapidDeployConnectorProxy {
 		try {
 			final String jobRequestOutput = RapidDeployConnector.invokeRapidDeployBuildPackage(authenticationToken, serverUrl, project, packageName,
 					archiveExtension, false, true);
-			return checkJobStatus(listener, serverUrl, authenticationToken, jobRequestOutput, false);
+			return checkJobStatus(listener, serverUrl, authenticationToken, jobRequestOutput, false, true);
 		} catch (final Exception e) {
 			listener.getLogger().println("Call failed with error: " + e.getMessage());
 			return false;
@@ -97,7 +97,8 @@ public class RapidDeployConnectorProxy {
 	/****************************/
 
 	public static boolean performJobDeployment(final AbstractBuild<?, ?> build, final BuildListener listener, final String serverUrl,
-			final String authenticationToken, final String project, final String target, String packageName, final Boolean asynchronousJob) {
+			final String authenticationToken, final String project, final String target, String packageName, final Boolean asynchronousJob,
+			final Boolean showFullLog) {
 		if (StringUtils.isNotBlank(packageName)) {
 			packageName = replaceParametersPlaceholders(packageName, build, listener);
 		}
@@ -124,13 +125,14 @@ public class RapidDeployConnectorProxy {
 		listener.getLogger().println("  > Target: " + target);
 		listener.getLogger().println("  > Package: " + packageName);
 		listener.getLogger().println("  > Asynchronous? " + asynchronousJob);
+		listener.getLogger().println("  > Show full log? " + showFullLog);
 		listener.getLogger().println("  > Data dictionary: " + dataDictionary);
 		listener.getLogger().println();
 		try {
 			final String jobRequestOutput = RapidDeployConnector.invokeRapidDeployDeploymentPollOutput(authenticationToken, serverUrl, project, target,
 					packageName, false, true, dataDictionary);
 			if (!asynchronousJob) {
-				return checkJobStatus(listener, serverUrl, authenticationToken, jobRequestOutput, false);
+				return checkJobStatus(listener, serverUrl, authenticationToken, jobRequestOutput, false, showFullLog);
 			}
 			return true;
 		} catch (final Exception e) {
@@ -144,18 +146,19 @@ public class RapidDeployConnectorProxy {
 	/**************************/
 
 	public static boolean performJobPlanRun(final BuildListener listener, final String serverUrl, final String authenticationToken, final String jobPlan,
-			final Boolean asynchronousJob, final Boolean showFullLogs) {
+			final Boolean asynchronousJob, final Boolean showIndividualLogs, final Boolean showFullLog) {
 		listener.getLogger().println("Invoking RapidDeploy job plan execution via path...");
 		listener.getLogger().println("  > Server URL: " + serverUrl);
 		listener.getLogger().println("  > jobPlan: " + jobPlan);
 		listener.getLogger().println("  > Asynchronous? " + asynchronousJob);
-		listener.getLogger().println("  > Show Full Logs? " + showFullLogs);
+		listener.getLogger().println("  > Show individual logs? " + showIndividualLogs);
+		listener.getLogger().println("  > Show full log? " + showFullLog);
 		listener.getLogger().println();
 		final String jobPlanId = jobPlan.substring(jobPlan.indexOf("[") + 1, jobPlan.indexOf("]"));
 		try {
 			final String jobRequestOutput = RapidDeployConnector.invokeRapidDeployJobPlanPollOutput(authenticationToken, serverUrl, jobPlanId, true);
 			if (!asynchronousJob) {
-				return checkJobStatus(listener, serverUrl, authenticationToken, jobRequestOutput, showFullLogs);
+				return checkJobStatus(listener, serverUrl, authenticationToken, jobRequestOutput, showIndividualLogs, showFullLog);
 			}
 			return true;
 		} catch (final Exception e) {
@@ -169,7 +172,7 @@ public class RapidDeployConnectorProxy {
 	/***********************/
 
 	private static boolean checkJobStatus(final BuildListener listener, final String serverUrl, final String authenticationToken, final String jobRequestOutput,
-			final boolean showFullLogs) throws Exception {
+			final boolean showIndividualLogs, final boolean showFullLog) throws Exception {
 		boolean success = false;
 		final String jobId = RapidDeployConnector.extractJobId(jobRequestOutput);
 		listener.getLogger().println(">>>  RapidDeploy job requested [" + jobId + "] <<<");
@@ -202,25 +205,51 @@ public class RapidDeployConnectorProxy {
 					}
 				}
 			}
-			final String logs = RapidDeployConnector.pollRapidDeployJobLog(authenticationToken, serverUrl, jobId);
-			final StringBuilder fullLogs = new StringBuilder();
-			fullLogs.append(logs);
+			if (showFullLog) {
+				final String logs = RapidDeployConnector.pollRapidDeployJobLog(authenticationToken, serverUrl, jobId);
+				final StringBuilder fullLog = new StringBuilder();
+				fullLog.append(logs);
 
-			if (showFullLogs && StringUtils.isNotBlank(jobDetails)) {
-				fullLogs.append("\n");
-				final List<String> includedJobIds = RapidDeployConnector.extractIncludedJobIdsUnderPipelineJob(jobDetails);
-				for (final String internalJobId : includedJobIds) {
-					fullLogs.append("LOGS RELATED TO JOB ID: ").append(internalJobId).append("\n");
-					fullLogs.append(RapidDeployConnector.pollRapidDeployJobLog(authenticationToken, serverUrl, internalJobId));
+				if (showIndividualLogs && StringUtils.isNotBlank(jobDetails)) {
+					fullLog.append("\n");
+					final List<String> includedJobIds = RapidDeployConnector.extractIncludedJobIdsUnderPipelineJob(jobDetails);
+					for (final String internalJobId : includedJobIds) {
+						fullLog.append("LOGS RELATED TO JOB ID: ").append(internalJobId).append("\n");
+						fullLog.append(RapidDeployConnector.pollRapidDeployJobLog(authenticationToken, serverUrl, internalJobId));
+					}
 				}
-			}
 
-			if (!success) {
-				throw new RuntimeException("RapidDeploy job failed. Please check the output." + System.getProperty("line.separator") + fullLogs.toString());
+				if (!success) {
+					throw new RuntimeException("RapidDeploy job failed. Please check the output." + System.getProperty("line.separator") + fullLog.toString());
+				}
+				listener.getLogger().println("RapidDeploy job successfully run. Please check the output.");
+				listener.getLogger().println();
+				listener.getLogger().println(fullLog.toString());
+			} else {
+				String baseLogUrl = serverUrl;
+				if (serverUrl != null && serverUrl.endsWith("/")) {
+					baseLogUrl = serverUrl.substring(0, serverUrl.length() - 1);
+				}
+				baseLogUrl = baseLogUrl + "/ws/streamer/job/log/";
+
+				final StringBuilder logUrls = new StringBuilder();
+				logUrls.append(baseLogUrl).append(jobId).append("\n");
+
+				if (showIndividualLogs && StringUtils.isNotBlank(jobDetails)) {
+					logUrls.append("Individual RapidDeploy deployment logs: ").append("\n");
+					final List<String> includedJobIds = RapidDeployConnector.extractIncludedJobIdsUnderPipelineJob(jobDetails);
+					for (final String internalJobId : includedJobIds) {
+						logUrls.append("  ").append(baseLogUrl).append(internalJobId).append("\n");
+					}
+				}
+
+				if (!success) {
+					throw new RuntimeException(
+							"RapidDeploy job failed." + System.getProperty("line.separator") + "You can check the RapidDeploy logs here: " + logUrls);
+				}
+				listener.getLogger().println("RapidDeploy job successfully run.");
+				listener.getLogger().println("You can check the RapidDeploy logs here: " + logUrls);
 			}
-			listener.getLogger().println("RapidDeploy job successfully run. Please check the output.");
-			listener.getLogger().println();
-			listener.getLogger().println(fullLogs.toString());
 		} else {
 			throw new RuntimeException("Could not retrieve job ID, possibly running asynchronously!");
 		}
