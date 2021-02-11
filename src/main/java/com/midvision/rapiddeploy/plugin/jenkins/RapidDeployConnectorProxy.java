@@ -44,6 +44,7 @@ public class RapidDeployConnectorProxy {
 	public static final String BATCHED = "BATCHED";
 	public static final String JOB_HALTED = "JOB_HALTED";
 	public static final String TASK_HALTED = "TASK_HALTED";
+	public static final String REQUESTED_EXECUTING = "REQUESTED_EXECUTING";
 	public static final String REQUESTED_SCHEDULED = "REQUESTED_SCHEDULED";
 	public static final String RESUMING = "RESUMING";
 
@@ -186,12 +187,18 @@ public class RapidDeployConnectorProxy {
 				jobDetails = RapidDeployConnector.pollRapidDeployJobDetails(authenticationToken, serverUrl, jobId);
 				final String jobStatus = RapidDeployConnector.extractJobStatus(jobDetails);
 				listener.getLogger().println("Job status: " + jobStatus);
-				if ((jobStatus.equals(SUBMITTED)) || (jobStatus.equals(STARTING)) || (jobStatus.equals(EXECUTING))) {
+				if (jobStatus.equals(SUBMITTED) || jobStatus.equals(STARTING) || jobStatus.equals(EXECUTING) || jobStatus.equals(BATCHED)
+						|| jobStatus.equals(RESUMING)) {
 					listener.getLogger().println("Job running, next check in 30 seconds...");
 					milisToSleep = 30000L;
-				} else if ((jobStatus.equals(REQUESTED)) || (jobStatus.equals(REQUESTED_SCHEDULED))) {
+				} else if (jobStatus.equals(REQUESTED) || jobStatus.equals(REQUESTED_SCHEDULED) || jobStatus.equals(REQUESTED_EXECUTING)) {
 					listener.getLogger().println("Job in a REQUESTED state. Approval may be required in RapidDeploy "
 							+ "to continue with the execution, next check in 30 seconds...");
+				} else if (jobStatus.equals(JOB_HALTED) || jobStatus.equals(TASK_HALTED)) {
+					listener.getLogger().println("Job in a HALTED state, next check in 5 minutes...");
+					listener.getLogger().println("Printing out job details: ");
+					listener.getLogger().println(jobDetails);
+					milisToSleep = 300000L;
 				} else if (jobStatus.equals(SCHEDULED)) {
 					listener.getLogger().println("Job in a SCHEDULED state, the execution will start in a future date, next check in 5 minutes...");
 					listener.getLogger().println("Printing out job details: ");
