@@ -39,7 +39,7 @@
 		<dependency>
 			<groupId>com.midvision.plugins</groupId>
 			<artifactId>rapiddeploy-connector</artifactId>
-			<version>1.12</version>
+			<version>1.13</version>
 		</dependency>
 		<dependency>
 			<groupId>org.jenkins-ci.plugins.workflow</groupId>
@@ -103,7 +103,7 @@
 		</repository>
 		<repository>
 			<id>MidVision</id>
-			<url>http://www.download.midvision.com/content/repositories/Community_release/</url>
+			<url>https://plugins.midvision.com/downloads/releases</url>
 		</repository>
 	</repositories>
 	<pluginRepositories>
