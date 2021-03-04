@@ -12,12 +12,12 @@
 	<version>4.7-SNAPSHOT</version>
 	<packaging>hpi</packaging>
 
-	<url>https://wiki.jenkins-ci.org/display/JENKINS/RapidDeploy+Plugin</url>
+	<url>https://github.com/jenkinsci/rapiddeploy-plugin</url>
 
 	<developers>
 		<developer>
 			<id>MidVision</id>
-			<name>MidVision</name>
+			<name>MidVision Limited</name>
 			<email>support@midvision.com</email>
 		</developer>
 	</developers>
