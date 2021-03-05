@@ -2,8 +2,11 @@
 = RapidDeploy Plugin
 
 image:https://img.shields.io/jenkins/plugin/v/rapiddeploy-jenkins[link="https://plugins.jenkins.io/rapiddeploy-jenkins"]
+image:https://img.shields.io/github/v/release/jenkinsci/rapiddeploy-plugin["GitHub release", link="https://github.com/jenkinsci/rapiddeploy-plugin/releases/latest"]
+image:https://img.shields.io/github/release-date/jenkinsci/rapiddeploy-plugin?color=blue["GitHub release date", link="https://github.com/jenkinsci/rapiddeploy-plugin/releases/latest"]
 image:https://img.shields.io/jenkins/plugin/i/rapiddeploy-jenkins?color=blue[link="https://plugins.jenkins.io/rapiddeploy-jenkins"]
 image:https://img.shields.io/github/contributors/jenkinsci/rapiddeploy-plugin?color=blue[link="https://github.com/jenkinsci/rapiddeploy-plugin/graphs/contributors"]
+
 image:https://ci.jenkins.io/job/Plugins/job/rapiddeploy-plugin/job/master/badge/icon[link="https://ci.jenkins.io/job/Plugins/job/rapiddeploy-plugin/job/master/"]
 image:https://app.codacy.com/project/badge/Grade/a446a4a74701487abddc8f9aaf29f2e6["Codacy code quality", link="https://www.codacy.com/gh/MidVision/rapiddeploy-jenkins/dashboard"]
 
